@@ -129,12 +129,19 @@
             if (data.status === 0) {
                 const registerBtn = document.getElementById('registerBtn');
                 if (registerBtn) {
+                    console.log('Adding event listener to registerBtn'); // 添加日志
                     registerBtn.addEventListener('click', register);
                 }
             } else if (data.status === 1) {
-                document.getElementById('submitCodeBtn').addEventListener('click', submitVerificationCode);
+                const submitCodeBtn = document.getElementById('submitCodeBtn');
+                if (submitCodeBtn) {
+                    submitCodeBtn.addEventListener('click', submitVerificationCode);
+                }
             } else if (data.status === 2) {
-                document.getElementById('refreshBtn').addEventListener('click', checkStatus);
+                const refreshBtn = document.getElementById('refreshBtn');
+                if (refreshBtn) {
+                    refreshBtn.addEventListener('click', checkStatus);
+                }
             }
         }
 
@@ -204,9 +211,6 @@
         });
 
         checkStatus();
-    </script>
-    <script>
-        document.addEventListener('DOMContentLoaded', checkStatus);
     </script>
 </body>
 </html>
