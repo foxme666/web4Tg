@@ -45,13 +45,15 @@
             try {
                 const response = await fetch('/api/admin/records');
                 if (response.ok) {
-                    records = await response.json();
+                    const data = await response.json();
+                    console.log('Fetched records:', data);  // 添加这行来查看获取的数据
+                    records = data.filter(record => record && record.phone);  // 过滤掉无效记录
                     displayRecords();
                 } else {
-                    console.error('Failed to fetch records');
+                    console.error('Failed to fetch records', await response.text());
                 }
             } catch (error) {
-                console.error('Error:', error);
+                console.error('Error fetching records:', error);
             }
         }
 
