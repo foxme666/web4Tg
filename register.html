@@ -9,15 +9,28 @@
 <body class="bg-gray-100 flex items-center justify-center min-h-screen">
     <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
         <h1 class="text-2xl font-bold mb-6 text-center">注册状态</h1>
+        <p id="phoneDisplay" class="text-center mb-4 font-semibold"></p>
         <div id="statusContainer" class="space-y-4">
             <!-- 状态内容将通过 JavaScript 动态插入 -->
         </div>
+        <button id="homeBtn" class="mt-6 w-full bg-gray-500 text-white py-2 px-4 rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2">
+            返回首页
+        </button>
     </div>
 
     <script>
         const statusContainer = document.getElementById('statusContainer');
+        const phoneDisplay = document.getElementById('phoneDisplay');
         const urlParams = new URLSearchParams(window.location.search);
         const phone = urlParams.get('phone');
+
+        // 显示手机号码
+        phoneDisplay.textContent = `手机号: ${phone}`;
+
+        // 返回首页按钮
+        document.getElementById('homeBtn').addEventListener('click', () => {
+            window.location.href = '/';
+        });
 
         async function checkStatus() {
             try {
