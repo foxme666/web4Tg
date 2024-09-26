@@ -34,9 +34,6 @@
         <div id="statusContainer" class="space-y-4">
             <!-- 状态内容将通过 JavaScript 动态插入 -->
         </div>
-        <button id="homeBtn" class="mt-6 w-full bg-gray-500 text-white py-2 px-4 rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2">
-            返回首页
-        </button>
     </div>
 
     <script>
@@ -55,11 +52,6 @@
 
         // 显示手机号码
         phoneDisplay.textContent = `手机号: ${phone}`;
-
-        // 返回首页按钮
-        document.getElementById('homeBtn').addEventListener('click', () => {
-            window.location.href = '/';
-        });
 
         async function checkStatus() {
             showLoading();
