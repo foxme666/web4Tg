@@ -57,19 +57,12 @@ export async function submitCode(request, { env }) {
 }
 
 export async function getAdminRecords(request, { env }) {
-    try {
-        await env.PHONE_KV.put('test_key', JSON.stringify({ test: 'value' }));
-        const value = await env.PHONE_KV.get('test_key');
-        return new Response(JSON.stringify({ test: value }), { 
-            status: 200,
-            headers: { 'Content-Type': 'application/json' }
-        });
-    } catch (error) {
-        return new Response(JSON.stringify({ error: error.message }), { 
-            status: 500,
-            headers: { 'Content-Type': 'application/json' }
-        });
-    }
+    console.log('getAdminRecords function called');
+    return new Response(JSON.stringify({ message: "getAdminRecords function called" }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' }
+    });
+    // ... 原有的代码 ...
 }
 
 export async function updateAdminStatus(request, { env }) {
@@ -122,4 +115,39 @@ export async function testKV(request, { env }) {
             headers: { 'Content-Type': 'application/json' }
         });
     }
+}
+
+export async function getAllKVRecords(request, { env }) {
+    console.log('getAllKVRecords function called');
+    const records = [];
+    try {
+        const { keys } = await env.PHONE_KV.list();
+        console.log('KV keys:', keys);
+
+        for (const key of keys) {
+            const value = await env.PHONE_KV.get(key);
+            console.log(`Value for key ${key}:`, value);
+            if (value) {
+                try {
+                    const data = JSON.parse(value);
+                    records.push({ key, value: data });
+                } catch (error) {
+                    console.error(`Error parsing value for key ${key}:`, error);
+                    records.push({ key, value: value });
+                }
+            }
+        }
+    } catch (error) {
+        console.error('Error fetching all KV records:', error);
+        return new Response(JSON.stringify({ error: error.message }), { 
+            status: 500,
+            headers: { 'Content-Type': 'application/json' }
+        });
+    }
+
+    console.log('All KV records:', records);
+    return new Response(JSON.stringify(records), { 
+        status: 200,
+        headers: { 'Content-Type': 'application/json' }
+    });
 }
