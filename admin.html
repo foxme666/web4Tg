@@ -42,11 +42,13 @@
             <div class="overflow-x-auto">
                 <table class="min-w-full bg-white">
                     <thead>
-                        <tr>
-                            <th class="py-2 px-4 border-b">选择</th>
-                            <th class="py-2 px-4 border-b">手机号</th>
-                            <th class="py-2 px-4 border-b">状态</th>
-                            <th class="py-2 px-4 border-b">验证码</th>
+                        <tr class="bg-gray-200 text-gray-600 uppercase text-sm leading-normal">
+                            <th class="py-3 px-6 text-left">
+                                <input type="checkbox" id="selectAll" class="form-checkbox h-5 w-5 text-blue-600">
+                            </th>
+                            <th class="py-3 px-6 text-left">手机号</th>
+                            <th class="py-3 px-6 text-left">状态</th>
+                            <th class="py-3 px-6 text-left">验证码</th>
                         </tr>
                     </thead>
                     <tbody id="recordsContainer">
@@ -97,41 +99,21 @@
         async function fetchRecords(page = 1) {
             showLoading();
             try {
-                console.log('Fetching records...');
                 const response = await fetch(`/api/admin/records?page=${page}&limit=${recordsPerPage}`);
-                console.log('Response status:', response.status);
-                const text = await response.text();
-                console.log('Response text:', text);
-                
                 if (response.ok) {
-                    try {
-                        const data = JSON.parse(text);
-                        console.log('Parsed data:', data);
-                        if (Array.isArray(data.records)) {
-                            records = data.records;
-                            currentPage = data.currentPage;
-                            totalPages = data.totalPages;
-                            console.log('Filtered records:', records);
-                            displayRecords();
-                            updatePagination();
-                        } else if (data.error) {
-                            console.error('Server error:', data.error);
-                            document.getElementById('recordsContainer').innerHTML = `<tr><td colspan="4" class="text-red-500">${data.error}</td></tr>`;
-                        } else {
-                            console.error('Unexpected data format:', data);
-                            document.getElementById('recordsContainer').innerHTML = '<tr><td colspan="4" class="text-red-500">获取记录失败，数据格式不正确</td></tr>';
-                        }
-                    } catch (error) {
-                        console.error('Error parsing JSON:', error);
-                        document.getElementById('recordsContainer').innerHTML = '<tr><td colspan="4" class="text-red-500">解析数据失败，请刷新页面重试</td></tr>';
-                    }
+                    const data = await response.json();
+                    records = data.records;
+                    currentPage = data.currentPage;
+                    totalPages = data.totalPages;
+                    displayRecords();
+                    updatePagination();
                 } else {
-                    console.error('Failed to fetch records', text);
-                    document.getElementById('recordsContainer').innerHTML = `<tr><td colspan="4" class="text-red-500">获取记录失败，状态码：${response.status}，错误信息：${text}</td></tr>`;
+                    console.error('Failed to fetch records');
+                    document.getElementById('recordsContainer').innerHTML = '<tr><td colspan="4" class="text-red-500">获取记录失败，请刷新页面重试</td></tr>';
                 }
             } catch (error) {
                 console.error('Error fetching records:', error);
-                document.getElementById('recordsContainer').innerHTML = `<tr><td colspan="4" class="text-red-500">发生错误，请刷新页面重试。错误信息：${error.message}</td></tr>`;
+                document.getElementById('recordsContainer').innerHTML = '<tr><td colspan="4" class="text-red-500">发生错误，请刷新页面重试</td></tr>';
             } finally {
                 hideLoading();
             }
@@ -139,34 +121,26 @@
 
         function displayRecords() {
             const container = document.getElementById('recordsContainer');
+            container.innerHTML = '';
 
             if (records.length === 0) {
-                container.innerHTML = '<tr><td colspan="4" class="fade-in">暂无记录</td></tr>';
+                container.innerHTML = '<tr><td colspan="4" class="py-3 px-6 text-center">暂无记录</td></tr>';
                 return;
             }
 
-            const newContent = records.map((record, index) => {
-                if (!record || !record.phone) {
-                    console.error('Invalid record:', record);
-                    return '<tr><td colspan="4" class="p-4 bg-red-100 text-red-700 rounded-md fade-in">无效记录</td></tr>';
-                }
-                return `
-                    <tr class="fade-in">
-                        <td class="py-2 px-4 border-b">
-                            <input type="checkbox" id="record-${index}" class="record-checkbox">
-                        </td>
-                        <td class="py-2 px-4 border-b">${record.phone}</td>
-                        <td class="py-2 px-4 border-b">${getStatusText(record.status)}</td>
-                        <td class="py-2 px-4 border-b">${record.code || '无'}</td>
-                    </tr>
+            records.forEach((record, index) => {
+                const row = document.createElement('tr');
+                row.className = 'border-b border-gray-200 hover:bg-gray-100';
+                row.innerHTML = `
+                    <td class="py-3 px-6 text-left whitespace-nowrap">
+                        <input type="checkbox" id="record-${index}" class="record-checkbox form-checkbox h-5 w-5 text-blue-600">
+                    </td>
+                    <td class="py-3 px-6 text-left">${record.phone}</td>
+                    <td class="py-3 px-6 text-left">${getStatusText(record.status)}</td>
+                    <td class="py-3 px-6 text-left">${record.code || '无'}</td>
                 `;
-            }).join('');
-
-            container.style.opacity = '0';
-            setTimeout(() => {
-                container.innerHTML = newContent;
-                container.style.opacity = '1';
-            }, 50);
+                container.appendChild(row);
+            });
         }
 
         function getStatusText(status) {
@@ -190,6 +164,11 @@
 
             pageInfo.textContent = `第 ${currentPage} 页，共 ${totalPages} 页`;
         }
+
+        document.getElementById('selectAll').addEventListener('change', function() {
+            const checkboxes = document.querySelectorAll('.record-checkbox');
+            checkboxes.forEach(checkbox => checkbox.checked = this.checked);
+        });
 
         document.getElementById('nextBtn').addEventListener('click', () => {
             if (currentPage < totalPages) {
@@ -232,17 +211,15 @@
                 }
             }
 
-            await fetchRecords(); // 刷新记录列表
-            displayRecords(); // 重新显示记录以触发动画
+            await fetchRecords(currentPage);
             hideLoading();
         }
 
-        fetchRecords(1); // 初始加载记录，从第一页开始
-
-        // 添加返回首页按钮的事件监听器
         document.getElementById('homeBtn').addEventListener('click', () => {
             window.location.href = '/';
         });
+
+        fetchRecords(1);
     </script>
 </body>
 </html>
