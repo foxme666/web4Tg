@@ -57,18 +57,13 @@ export async function submitCode(request, { env }) {
 }
 
 export async function getAdminRecords(request, { env }) {
-    const url = new URL(request.url);
-    const status = parseInt(url.searchParams.get('status'));
-
     const records = [];
     const { keys } = await env.PHONE_KV.list();
 
     for (const key of keys) {
         const value = await env.PHONE_KV.get(key);
         const data = JSON.parse(value);
-        if (data.status === status) {
-            records.push(data);
-        }
+        records.push(data);
     }
 
     return new Response(JSON.stringify(records), { status: 200 });

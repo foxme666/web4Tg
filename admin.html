@@ -10,27 +10,40 @@
     <div class="container mx-auto">
         <h1 class="text-3xl font-bold mb-8">管理员页面</h1>
         <div class="bg-white rounded-lg shadow-md p-6">
-            <h2 class="text-xl font-semibold mb-4">审核中的记录</h2>
+            <h2 class="text-xl font-semibold mb-4">所有记录</h2>
             <div id="recordsContainer" class="space-y-4">
                 <!-- 记录将通过 JavaScript 动态插入 -->
             </div>
-            <div class="mt-6 flex space-x-4">
-                <button id="approveBtn" class="bg-green-500 text-white py-2 px-4 rounded-md hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2">
-                    批准选中记录
-                </button>
-                <button id="rejectBtn" class="bg-red-500 text-white py-2 px-4 rounded-md hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2">
-                    拒绝选中记录
-                </button>
+            <div class="mt-6 flex justify-between items-center">
+                <div class="flex space-x-4">
+                    <button id="approveBtn" class="bg-green-500 text-white py-2 px-4 rounded-md hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2">
+                        批准选中记录
+                    </button>
+                    <button id="rejectBtn" class="bg-red-500 text-white py-2 px-4 rounded-md hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2">
+                        拒绝选中记录
+                    </button>
+                </div>
+                <div class="flex space-x-2">
+                    <button id="prevBtn" class="bg-gray-300 text-gray-700 py-2 px-4 rounded-md hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2">
+                        上一页
+                    </button>
+                    <span id="pageInfo" class="py-2 px-4"></span>
+                    <button id="nextBtn" class="bg-gray-300 text-gray-700 py-2 px-4 rounded-md hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2">
+                        下一页
+                    </button>
+                </div>
             </div>
         </div>
     </div>
 
     <script>
         let records = [];
+        let currentPage = 1;
+        const recordsPerPage = 10;
 
         async function fetchRecords() {
             try {
-                const response = await fetch('/api/admin/records?status=2');
+                const response = await fetch('/api/admin/records');
                 if (response.ok) {
                     records = await response.json();
                     displayRecords();
@@ -44,19 +57,59 @@
 
         function displayRecords() {
             const container = document.getElementById('recordsContainer');
-            if (records.length === 0) {
-                container.innerHTML = '<p>暂无审核中的记录</p>';
+            const startIndex = (currentPage - 1) * recordsPerPage;
+            const endIndex = startIndex + recordsPerPage;
+            const pageRecords = records.slice(startIndex, endIndex);
+
+            if (pageRecords.length === 0) {
+                container.innerHTML = '<p>暂无记录</p>';
                 return;
             }
-            container.innerHTML = records.map((record, index) => `
+
+            container.innerHTML = pageRecords.map((record, index) => `
                 <div class="flex items-center space-x-4 p-4 bg-gray-50 rounded-md">
-                    <input type="checkbox" id="record-${index}" class="record-checkbox">
-                    <label for="record-${index}">
-                        手机号: ${record.phone.number}, 验证码: ${record.phone.code}
+                    <input type="checkbox" id="record-${startIndex + index}" class="record-checkbox">
+                    <label for="record-${startIndex + index}">
+                        手机号: ${record.phone.number}, 状态: ${getStatusText(record.status)}, 验证码: ${record.phone.code || '无'}
                     </label>
                 </div>
             `).join('');
+
+            updatePagination();
         }
+
+        function getStatusText(status) {
+            const statusMap = {
+                0: '未注册',
+                1: '注册中',
+                2: '审核中',
+                3: '已注册',
+                4: '无效'
+            };
+            return statusMap[status] || '未知状态';
+        }
+
+        function updatePagination() {
+            const totalPages = Math.ceil(records.length / recordsPerPage);
+            document.getElementById('pageInfo').textContent = `${currentPage} / ${totalPages}`;
+            document.getElementById('prevBtn').disabled = currentPage === 1;
+            document.getElementById('nextBtn').disabled = currentPage === totalPages;
+        }
+
+        document.getElementById('prevBtn').addEventListener('click', () => {
+            if (currentPage > 1) {
+                currentPage--;
+                displayRecords();
+            }
+        });
+
+        document.getElementById('nextBtn').addEventListener('click', () => {
+            const totalPages = Math.ceil(records.length / recordsPerPage);
+            if (currentPage < totalPages) {
+                currentPage++;
+                displayRecords();
+            }
+        });
 
         document.getElementById('approveBtn').addEventListener('click', () => updateStatus(3));
         document.getElementById('rejectBtn').addEventListener('click', () => updateStatus(4));
