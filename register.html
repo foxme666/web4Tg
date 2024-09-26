@@ -34,6 +34,10 @@
         <div id="statusContainer" class="space-y-4">
             <!-- 状态内容将通过 JavaScript 动态插入 -->
         </div>
+        <!-- 添加返回首页按钮 -->
+        <button id="homeBtn" class="mt-6 w-full bg-gray-500 text-white py-2 px-4 rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2">
+            返回首页
+        </button>
     </div>
 
     <script>
@@ -123,7 +127,10 @@
             statusContainer.innerHTML = content;
 
             if (data.status === 0) {
-                document.getElementById('registerBtn').addEventListener('click', register);
+                const registerBtn = document.getElementById('registerBtn');
+                if (registerBtn) {
+                    registerBtn.addEventListener('click', register);
+                }
             } else if (data.status === 1) {
                 document.getElementById('submitCodeBtn').addEventListener('click', submitVerificationCode);
             } else if (data.status === 2) {
@@ -132,6 +139,7 @@
         }
 
         async function register() {
+            console.log('Register function called'); // 添加日志
             showLoading();
             try {
                 const response = await fetch('/api/register', {
@@ -142,6 +150,8 @@
                     body: JSON.stringify({ phone }),
                 });
                 
+                console.log('Register response status:', response.status); // 添加日志
+                
                 if (response.ok) {
                     alert('已提交,请等待处理');
                     checkStatus();
@@ -150,7 +160,7 @@
                     alert(data.message || '注册失败,请稍后再试。');
                 }
             } catch (error) {
-                console.error('Error:', error);
+                console.error('Register error:', error);
                 alert('发生错误,请稍后再试。');
             } finally {
                 hideLoading();
@@ -188,7 +198,15 @@
             }
         }
 
+        // 添加返回首页按钮的事件监听器
+        document.getElementById('homeBtn').addEventListener('click', () => {
+            window.location.href = '/';
+        });
+
         checkStatus();
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', checkStatus);
     </script>
 </body>
 </html>

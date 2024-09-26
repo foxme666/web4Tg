@@ -74,6 +74,10 @@
                 </div>
             </div>
         </div>
+        <!-- 添加返回首页按钮 -->
+        <button id="homeBtn" class="mt-6 bg-gray-500 text-white py-2 px-4 rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2">
+            返回首页
+        </button>
     </div>
 
     <script>
@@ -234,6 +238,11 @@
         }
 
         fetchRecords(1); // 初始加载记录，从第一页开始
+
+        // 添加返回首页按钮的事件监听器
+        document.getElementById('homeBtn').addEventListener('click', () => {
+            window.location.href = '/';
+        });
     </script>
 </body>
 </html>
