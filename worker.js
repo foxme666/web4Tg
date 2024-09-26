@@ -57,45 +57,19 @@ export async function submitCode(request, { env }) {
 }
 
 export async function getAdminRecords(request, { env }) {
-    console.log('getAdminRecords function called');
-    const records = [];
     try {
-        console.log('PHONE_KV:', env.PHONE_KV);
-        if (!env.PHONE_KV) {
-            throw new Error('PHONE_KV is not defined');
-        }
-        const { keys } = await env.PHONE_KV.list();
-        console.log('KV keys:', keys);
-
-        for (const key of keys) {
-            try {
-                const value = await env.PHONE_KV.get(key);
-                console.log(`Value for key ${key}:`, value);
-                if (value) {
-                    const data = JSON.parse(value);
-                    if (data && data.phone) {
-                        records.push(data);
-                    } else {
-                        console.error('Invalid record format:', data);
-                    }
-                }
-            } catch (error) {
-                console.error(`Error processing key ${key}:`, error);
-            }
-        }
+        await env.PHONE_KV.put('test_key', JSON.stringify({ test: 'value' }));
+        const value = await env.PHONE_KV.get('test_key');
+        return new Response(JSON.stringify({ test: value }), { 
+            status: 200,
+            headers: { 'Content-Type': 'application/json' }
+        });
     } catch (error) {
-        console.error('Error in getAdminRecords:', error);
         return new Response(JSON.stringify({ error: error.message }), { 
             status: 500,
             headers: { 'Content-Type': 'application/json' }
         });
     }
-
-    console.log('Final records:', records);
-    return new Response(JSON.stringify(records), { 
-        status: 200,
-        headers: { 'Content-Type': 'application/json' }
-    });
 }
 
 export async function updateAdminStatus(request, { env }) {
