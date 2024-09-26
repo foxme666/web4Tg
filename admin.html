@@ -44,6 +44,10 @@
 
         function displayRecords() {
             const container = document.getElementById('recordsContainer');
+            if (records.length === 0) {
+                container.innerHTML = '<p>暂无审核中的记录</p>';
+                return;
+            }
             container.innerHTML = records.map((record, index) => `
                 <div class="flex items-center space-x-4 p-4 bg-gray-50 rounded-md">
                     <input type="checkbox" id="record-${index}" class="record-checkbox">

