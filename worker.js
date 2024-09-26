@@ -1,4 +1,4 @@
-import { TG_BOT_TOKEN, TG_CHAT_ID } from './config';
+import { TG_BOT_TOKEN, TG_CHAT_ID } from './config.js';
 
 export async function verifyPhone(request) {
     const { phone } = await request.json();

@@ -1,5 +1,5 @@
 import { Router } from 'itty-router';
-import { verifyPhone, checkStatus, register, submitCode, getAdminRecords, updateAdminStatus } from '../../worker';
+import { verifyPhone, checkStatus, register, submitCode, getAdminRecords, updateAdminStatus } from '../../worker.js';
 
 const router = Router();
 
