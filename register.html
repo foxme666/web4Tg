@@ -130,10 +130,7 @@
             if (data.status === 0) {
                 const registerBtn = document.getElementById('registerBtn');
                 if (registerBtn) {
-                    console.log('Adding event listener to registerBtn'); // 添加日志
                     registerBtn.addEventListener('click', register);
-                } else {
-                    console.error('Register button not found');
                 }
             } else if (data.status === 1) {
                 const submitCodeBtn = document.getElementById('submitCodeBtn');
@@ -149,10 +146,8 @@
         }
 
         async function register() {
-            console.log('Register function called'); // 添加日志
             showLoading();
             try {
-                console.log('Sending register request for phone:', phone);
                 const response = await fetch('/api/register', {
                     method: 'POST',
                     headers: {
@@ -160,8 +155,6 @@
                     },
                     body: JSON.stringify({ phone }),
                 });
-                
-                console.log('Register response status:', response.status); // 添加日志
                 
                 if (response.ok) {
                     alert('已提交,请等待处理');
@@ -216,11 +209,11 @@
 
         // 确保在页面加载完成后立即调用 checkStatus
         document.addEventListener('DOMContentLoaded', () => {
-            console.log('DOM content loaded, calling checkStatus');
             checkStatus();
         });
 
-        checkStatus();
+        // 移除这行，因为我们已经在 DOMContentLoaded 事件中调用了 checkStatus
+        // checkStatus();
     </script>
 </body>
 </html>
