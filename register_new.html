@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>注册</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+    <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
+        <h1 class="text-2xl font-bold mb-6 text-center">注册</h1>
+        <p id="phoneDisplay" class="text-center mb-4 font-semibold"></p>
+        <button id="registerBtn" class="w-full bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+            注册
+        </button>
+        <button id="homeBtn" class="mt-4 w-full bg-gray-500 text-white py-2 px-4 rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2">
+            返回首页
+        </button>
+    </div>
+
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const phone = urlParams.get('phone');
+
+        document.getElementById('phoneDisplay').textContent = `手机号: ${phone}`;
+
+        async function register() {
+            try {
+                const response = await fetch('/api/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ phone }),
+                });
+                
+                if (response.ok) {
+                    alert('已提交，请等待处理');
+                    window.location.href = `/register_status.html?phone=${encodeURIComponent(phone)}`;
+                } else {
+                    const data = await response.json();
+                    alert(data.message || '注册失败，请稍后再试。');
+                }
+            } catch (error) {
+                console.error('Register error:', error);
+                alert('发生错误，请稍后再试。');
+            }
+        }
+
+        document.getElementById('registerBtn').addEventListener('click', register);
+        document.getElementById('homeBtn').addEventListener('click', () => {
+            window.location.href = '/';
+        });
+    </script>
+</body>
+</html>

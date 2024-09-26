@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>注册状态检查</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+    <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
+        <h1 class="text-2xl font-bold mb-6 text-center">正在检查注册状态</h1>
+        <p id="message" class="text-center">请稍候...</p>
+    </div>
+
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const phone = urlParams.get('phone');
+
+        async function checkStatus() {
+            try {
+                const response = await fetch(`/api/check-status?phone=${encodeURIComponent(phone)}`);
+                const data = await response.json();
+
+                if (response.ok) {
+                    switch (data.status) {
+                        case 0:
+                            window.location.href = `/register_new.html?phone=${encodeURIComponent(phone)}`;
+                            break;
+                        case 1:
+                            window.location.href = `/register_pending.html?phone=${encodeURIComponent(phone)}`;
+                            break;
+                        case 2:
+                            window.location.href = `/register_reviewing.html?phone=${encodeURIComponent(phone)}`;
+                            break;
+                        case 3:
+                            window.location.href = `/register_completed.html?phone=${encodeURIComponent(phone)}`;
+                            break;
+                        case 4:
+                            window.location.href = `/register_invalid.html?phone=${encodeURIComponent(phone)}&message=${encodeURIComponent(data.message || '该手机号无效')}`;
+                            break;
+                        default:
+                            document.getElementById('message').textContent = '未知状态，请联系管理员。';
+                    }
+                } else {
+                    document.getElementById('message').textContent = data.message || '获取状态失败，请稍后再试。';
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('message').textContent = '发生错误，请稍后再试。';
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', checkStatus);
+    </script>
+</body>
+</html>
