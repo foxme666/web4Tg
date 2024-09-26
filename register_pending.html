@@ -12,9 +12,10 @@
         <p id="phoneDisplay" class="text-center mb-4 font-semibold"></p>
         <p class="text-center mb-4">请输入您收到的短信验证码</p>
         <input type="text" id="verificationCode" placeholder="请输入验证码" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4">
-        <button id="submitCodeBtn" class="w-full bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+        <button id="submitCodeBtn" class="w-full bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2" disabled>
             提交验证码
         </button>
+        <p id="timeMessage" class="mt-2 text-center text-sm text-gray-500"></p>
         <button id="homeBtn" class="mt-4 w-full bg-gray-500 text-white py-2 px-4 rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2">
             返回首页
         </button>
@@ -25,6 +26,28 @@
         const phone = urlParams.get('phone');
 
         document.getElementById('phoneDisplay').textContent = `手机号: ${phone}`;
+
+        async function getTimeLimitEnabled() {
+            const response = await fetch('/api/get-time-limit-enabled');
+            const data = await response.json();
+            return data.timeLimitEnabled === '0';
+        }
+
+        async function updateButtonState() {
+            const currentHour = new Date().getHours();
+            const submitCodeBtn = document.getElementById('submitCodeBtn');
+            const timeMessage = document.getElementById('timeMessage');
+
+            const timeLimitEnabled = await getTimeLimitEnabled();
+
+            if (!timeLimitEnabled || (currentHour >= 10 && currentHour < 22)) {
+                submitCodeBtn.disabled = false;
+                timeMessage.textContent = '';
+            } else {
+                submitCodeBtn.disabled = true;
+                timeMessage.textContent = '验证码提交功能仅在 10:00 - 22:00 开放';
+            }
+        }
 
         async function submitVerificationCode() {
             const code = document.getElementById('verificationCode').value;
@@ -58,6 +81,10 @@
         document.getElementById('homeBtn').addEventListener('click', () => {
             window.location.href = '/';
         });
+
+        // 初始化按钮状态并每分钟更新一次
+        updateButtonState();
+        setInterval(updateButtonState, 60000);
     </script>
 </body>
 </html>

@@ -140,3 +140,9 @@ export function isWithinOperatingHours() {
     const hours = now.getUTCHours() + 8; // 转换为北京时间
     return hours >= 10 && hours < 22;
 }
+
+export async function getTimeLimitEnabled(request, { env }) {
+    return new Response(JSON.stringify({ timeLimitEnabled: env.TIME_LIMIT_ENABLED || '0' }), {
+        headers: { 'Content-Type': 'application/json' }
+    });
+}

@@ -1,5 +1,5 @@
 import { Router } from 'itty-router';
-import { verifyPhone, checkStatus, register, submitCode, getAdminRecords, updateAdminStatus } from '../../worker.js';
+import { verifyPhone, checkStatus, register, submitCode, getAdminRecords, updateAdminStatus, getTimeLimitEnabled } from '../../worker.js';
 
 const router = Router();
 
@@ -23,6 +23,7 @@ router.get('/api/admin/records', async (request, env) => {
   }
 });
 router.post('/api/admin/update-status', updateAdminStatus);
+router.get('/api/get-time-limit-enabled', getTimeLimitEnabled);
 
 export const onRequest = async (context) => {
   console.log('Request received:', context.request.url);
