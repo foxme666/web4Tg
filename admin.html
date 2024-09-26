@@ -63,7 +63,7 @@
                         const data = JSON.parse(text);
                         console.log('Parsed data:', data);
                         if (Array.isArray(data)) {
-                            records = data.filter(record => record && record.phone);
+                            records = data.filter(record => record && record.value && record.value.phone);
                             console.log('Filtered records:', records);
                             displayRecords();
                         } else if (data.error) {
@@ -99,7 +99,7 @@
             }
 
             const newContent = pageRecords.map((record, index) => {
-                if (!record || !record.phone) {
+                if (!record || !record.value || !record.value.phone) {
                     console.error('Invalid record:', record);
                     return '<div class="p-4 bg-red-100 text-red-700 rounded-md fade-in">无效记录</div>';
                 }
@@ -107,9 +107,9 @@
                     <div class="flex items-center space-x-4 p-4 bg-gray-50 rounded-md fade-in">
                         <input type="checkbox" id="record-${startIndex + index}" class="record-checkbox">
                         <label for="record-${startIndex + index}">
-                            手机号: ${record.phone.number}, 
-                            状态: ${getStatusText(record.status)}, 
-                            验证码: ${record.phone.code || '无'}
+                            手机号: ${record.value.phone.number}, 
+                            状态: ${getStatusText(record.value.status)}, 
+                            验证码: ${record.value.phone.code || '无'}
                         </label>
                     </div>
                 `;
