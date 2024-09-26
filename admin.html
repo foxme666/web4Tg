@@ -5,6 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>管理员页面</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        .fade-in {
+            animation: fadeIn 0.3s ease-in-out;
+        }
+    </style>
 </head>
 <body class="bg-gray-100 p-8">
     <div class="container mx-auto">
@@ -44,13 +53,22 @@
         async function fetchRecords() {
             try {
                 const response = await fetch('/api/admin/records');
+                console.log('Response status:', response.status);
+                const text = await response.text();
+                console.log('Response text:', text);
+                
                 if (response.ok) {
-                    const data = await response.json();
-                    console.log('Fetched records:', data);  // 添加这行来查看获取的数据
-                    records = data.filter(record => record && record.phone);  // 过滤掉无效记录
-                    displayRecords();
+                    try {
+                        const data = JSON.parse(text);
+                        console.log('Parsed data:', data);
+                        records = data.filter(record => record && record.phone);
+                        console.log('Filtered records:', records);
+                        displayRecords();
+                    } catch (error) {
+                        console.error('Error parsing JSON:', error);
+                    }
                 } else {
-                    console.error('Failed to fetch records', await response.text());
+                    console.error('Failed to fetch records', text);
                 }
             } catch (error) {
                 console.error('Error fetching records:', error);
@@ -64,17 +82,17 @@
             const pageRecords = records.slice(startIndex, endIndex);
 
             if (pageRecords.length === 0) {
-                container.innerHTML = '<p>暂无记录</p>';
+                container.innerHTML = '<p class="fade-in">暂无记录</p>';
                 return;
             }
 
-            container.innerHTML = pageRecords.map((record, index) => {
+            const newContent = pageRecords.map((record, index) => {
                 if (!record || !record.phone) {
                     console.error('Invalid record:', record);
-                    return '<div class="p-4 bg-red-100 text-red-700 rounded-md">无效记录</div>';
+                    return '<div class="p-4 bg-red-100 text-red-700 rounded-md fade-in">无效记录</div>';
                 }
                 return `
-                    <div class="flex items-center space-x-4 p-4 bg-gray-50 rounded-md">
+                    <div class="flex items-center space-x-4 p-4 bg-gray-50 rounded-md fade-in">
                         <input type="checkbox" id="record-${startIndex + index}" class="record-checkbox">
                         <label for="record-${startIndex + index}">
                             手机号: ${record.phone.number}, 
@@ -84,6 +102,13 @@
                     </div>
                 `;
             }).join('');
+
+            // 使用 setTimeout 来确保 DOM 更新和动画效果的顺序正确
+            container.style.opacity = '0';
+            setTimeout(() => {
+                container.innerHTML = newContent;
+                container.style.opacity = '1';
+            }, 50);
 
             updatePagination();
         }
@@ -149,10 +174,11 @@
                 }
             }
 
-            fetchRecords(); // 刷新记录列表
+            await fetchRecords(); // 刷新记录列表
+            displayRecords(); // 重新显示记录以触发动画
         }
 
-        fetchRecords(); // 初始加载记录
+        fetchRecords().then(() => displayRecords()); // 初始加载记录
     </script>
 </body>
 </html>

@@ -58,25 +58,36 @@ export async function submitCode(request, { env }) {
 
 export async function getAdminRecords(request, { env }) {
     const records = [];
-    const { keys } = await env.PHONE_KV.list();
+    console.log('Starting to fetch admin records');
+    try {
+        const { keys } = await env.PHONE_KV.list();
+        console.log('KV keys:', keys);
 
-    for (const key of keys) {
-        const value = await env.PHONE_KV.get(key);
-        if (value) {
-            try {
-                const data = JSON.parse(value);
-                if (data && data.phone) {
-                    records.push(data);
-                } else {
-                    console.error('Invalid record format:', data);
+        for (const key of keys) {
+            const value = await env.PHONE_KV.get(key);
+            console.log(`Value for key ${key}:`, value);
+            if (value) {
+                try {
+                    const data = JSON.parse(value);
+                    if (data && data.phone) {
+                        records.push(data);
+                    } else {
+                        console.error('Invalid record format:', data);
+                    }
+                } catch (error) {
+                    console.error('Error parsing record:', error);
                 }
-            } catch (error) {
-                console.error('Error parsing record:', error);
             }
         }
+    } catch (error) {
+        console.error('Error fetching records:', error);
     }
 
-    return new Response(JSON.stringify(records), { status: 200 });
+    console.log('Final records:', records);
+    return new Response(JSON.stringify(records), { 
+        status: 200,
+        headers: { 'Content-Type': 'application/json' }
+    });
 }
 
 export async function updateAdminStatus(request, { env }) {
@@ -112,5 +123,21 @@ async function sendTelegramNotification(message, env) {
         }
     } catch (error) {
         console.error('Error sending Telegram notification:', error);
+    }
+}
+
+export async function testKV(request, { env }) {
+    try {
+        await env.PHONE_KV.put('test_key', JSON.stringify({ test: 'value' }));
+        const value = await env.PHONE_KV.get('test_key');
+        return new Response(JSON.stringify({ test: value }), { 
+            status: 200,
+            headers: { 'Content-Type': 'application/json' }
+        });
+    } catch (error) {
+        return new Response(JSON.stringify({ error: error.message }), { 
+            status: 500,
+            headers: { 'Content-Type': 'application/json' }
+        });
     }
 }
