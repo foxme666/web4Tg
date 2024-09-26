@@ -7,17 +7,39 @@ router.post('/api/verify-phone', verifyPhone);
 router.get('/api/check-status', checkStatus);
 router.post('/api/register', register);
 router.post('/api/submit-code', submitCode);
-router.get('/api/admin/records', (request, env) => {
+router.get('/api/admin/records', async (request, env) => {
   console.log('Admin records route matched');
-  return getAdminRecords(request, env);
+  console.log('Request URL:', request.url);
+  console.log('Environment:', JSON.stringify(env));
+  try {
+    const response = await getAdminRecords(request, env);
+    console.log('Response:', response);
+    return response;
+  } catch (error) {
+    console.error('Error in getAdminRecords:', error);
+    return new Response(JSON.stringify({ error: error.message }), { 
+      status: 500,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
 });
 router.post('/api/admin/update-status', updateAdminStatus);
 router.get('/api/test-kv', testKV);
 router.get('/api/test-all-kv', getAllKVRecords);
 
-export const onRequest = async ({ request, env }) => {
-  console.log('Request received:', request.url);
-  const response = await router.handle(request, { env });
-  console.log('Response status:', response.status);
-  return response;
+export const onRequest = async (context) => {
+  console.log('Request received:', context.request.url);
+  console.log('Request method:', context.request.method);
+  console.log('Environment in onRequest:', JSON.stringify(context.env));
+  try {
+    const response = await router.handle(context.request, context);
+    console.log('Response status:', response.status);
+    return response;
+  } catch (error) {
+    console.error('Error in onRequest:', error);
+    return new Response(JSON.stringify({ error: error.message }), { 
+      status: 500,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
 };

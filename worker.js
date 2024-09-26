@@ -58,9 +58,14 @@ export async function submitCode(request, { env }) {
 
 export async function getAdminRecords(request, { env }) {
     console.log('getAdminRecords function called');
+    console.log('Request URL:', request.url);
+    console.log('Environment in getAdminRecords:', JSON.stringify(env));
     const url = new URL(request.url);
     const cursor = url.searchParams.get('cursor') || null;
     const limit = parseInt(url.searchParams.get('limit')) || 10;
+
+    console.log('Cursor:', cursor);
+    console.log('Limit:', limit);
 
     const records = [];
     try {
@@ -99,10 +104,7 @@ export async function getAdminRecords(request, { env }) {
 
     } catch (error) {
         console.error('Error fetching all KV records:', error);
-        return new Response(JSON.stringify({ error: error.message }), { 
-            status: 500,
-            headers: { 'Content-Type': 'application/json' }
-        });
+        throw error; // 让错误传播到调用者
     }
 }
 
