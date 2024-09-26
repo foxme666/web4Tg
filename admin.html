@@ -62,17 +62,28 @@
                     try {
                         const data = JSON.parse(text);
                         console.log('Parsed data:', data);
-                        records = data.filter(record => record && record.phone);
-                        console.log('Filtered records:', records);
-                        displayRecords();
+                        if (Array.isArray(data)) {
+                            records = data.filter(record => record && record.phone);
+                            console.log('Filtered records:', records);
+                            displayRecords();
+                        } else if (data.error) {
+                            console.error('Server error:', data.error);
+                            document.getElementById('recordsContainer').textContent = `错误: ${data.error}`;
+                        } else {
+                            console.error('Unexpected data format:', data);
+                            document.getElementById('recordsContainer').textContent = '获取记录失败，数据格式不正确';
+                        }
                     } catch (error) {
                         console.error('Error parsing JSON:', error);
+                        document.getElementById('recordsContainer').textContent = '解析数据失败，请刷新页面重试';
                     }
                 } else {
                     console.error('Failed to fetch records', text);
+                    document.getElementById('recordsContainer').textContent = '获取记录失败，请刷新页面重试';
                 }
             } catch (error) {
                 console.error('Error fetching records:', error);
+                document.getElementById('recordsContainer').textContent = '发生错误，请刷新页面重试';
             }
         }
 

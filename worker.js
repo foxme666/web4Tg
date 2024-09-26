@@ -59,30 +59,36 @@ export async function submitCode(request, { env }) {
 export async function getAdminRecords(request, { env }) {
     console.log('getAdminRecords function called');
     const records = [];
-    console.log('Starting to fetch admin records');
     try {
         console.log('PHONE_KV:', env.PHONE_KV);
+        if (!env.PHONE_KV) {
+            throw new Error('PHONE_KV is not defined');
+        }
         const { keys } = await env.PHONE_KV.list();
         console.log('KV keys:', keys);
 
         for (const key of keys) {
-            const value = await env.PHONE_KV.get(key);
-            console.log(`Value for key ${key}:`, value);
-            if (value) {
-                try {
+            try {
+                const value = await env.PHONE_KV.get(key);
+                console.log(`Value for key ${key}:`, value);
+                if (value) {
                     const data = JSON.parse(value);
                     if (data && data.phone) {
                         records.push(data);
                     } else {
                         console.error('Invalid record format:', data);
                     }
-                } catch (error) {
-                    console.error('Error parsing record:', error);
                 }
+            } catch (error) {
+                console.error(`Error processing key ${key}:`, error);
             }
         }
     } catch (error) {
-        console.error('Error fetching records:', error);
+        console.error('Error in getAdminRecords:', error);
+        return new Response(JSON.stringify({ error: error.message }), { 
+            status: 500,
+            headers: { 'Content-Type': 'application/json' }
+        });
     }
 
     console.log('Final records:', records);

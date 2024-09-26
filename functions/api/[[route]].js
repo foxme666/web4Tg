@@ -12,5 +12,6 @@ router.post('/api/admin/update-status', updateAdminStatus);
 router.get('/api/test-kv', testKV);  // 添加这一行
 
 export const onRequest = async ({ request, env }) => {
+  console.log('Request received:', request.url);
   return router.handle(request, { env });
 };
