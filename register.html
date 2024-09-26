@@ -143,6 +143,24 @@
                     refreshBtn.addEventListener('click', checkStatus);
                 }
             }
+            // 添加以下代码以确保按钮点击事件在每次更新UI时都被重新绑定
+            attachButtonListeners();
+        }
+
+        function attachButtonListeners() {
+            const registerBtn = document.getElementById('registerBtn');
+            const submitCodeBtn = document.getElementById('submitCodeBtn');
+            const refreshBtn = document.getElementById('refreshBtn');
+
+            if (registerBtn) {
+                registerBtn.addEventListener('click', register);
+            }
+            if (submitCodeBtn) {
+                submitCodeBtn.addEventListener('click', submitVerificationCode);
+            }
+            if (refreshBtn) {
+                refreshBtn.addEventListener('click', checkStatus);
+            }
         }
 
         async function register() {
