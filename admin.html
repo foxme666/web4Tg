@@ -66,14 +66,22 @@
                 return;
             }
 
-            container.innerHTML = pageRecords.map((record, index) => `
-                <div class="flex items-center space-x-4 p-4 bg-gray-50 rounded-md">
-                    <input type="checkbox" id="record-${startIndex + index}" class="record-checkbox">
-                    <label for="record-${startIndex + index}">
-                        手机号: ${record.phone.number}, 状态: ${getStatusText(record.status)}, 验证码: ${record.phone.code || '无'}
-                    </label>
-                </div>
-            `).join('');
+            container.innerHTML = pageRecords.map((record, index) => {
+                if (!record || !record.phone) {
+                    console.error('Invalid record:', record);
+                    return '<div class="p-4 bg-red-100 text-red-700 rounded-md">无效记录</div>';
+                }
+                return `
+                    <div class="flex items-center space-x-4 p-4 bg-gray-50 rounded-md">
+                        <input type="checkbox" id="record-${startIndex + index}" class="record-checkbox">
+                        <label for="record-${startIndex + index}">
+                            手机号: ${record.phone.number}, 
+                            状态: ${getStatusText(record.status)}, 
+                            验证码: ${record.phone.code || '无'}
+                        </label>
+                    </div>
+                `;
+            }).join('');
 
             updatePagination();
         }

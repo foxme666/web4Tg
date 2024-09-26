@@ -62,8 +62,18 @@ export async function getAdminRecords(request, { env }) {
 
     for (const key of keys) {
         const value = await env.PHONE_KV.get(key);
-        const data = JSON.parse(value);
-        records.push(data);
+        if (value) {
+            try {
+                const data = JSON.parse(value);
+                if (data && data.phone) {
+                    records.push(data);
+                } else {
+                    console.error('Invalid record format:', data);
+                }
+            } catch (error) {
+                console.error('Error parsing record:', error);
+            }
+        }
     }
 
     return new Response(JSON.stringify(records), { status: 200 });
