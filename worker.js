@@ -58,11 +58,7 @@ export async function submitCode(request, { env }) {
 
 export async function getAdminRecords(request, { env }) {
     console.log('getAdminRecords function called');
-    return new Response(JSON.stringify({ message: "getAdminRecords function called" }), {
-        status: 200,
-        headers: { 'Content-Type': 'application/json' }
-    });
-    // ... 原有的代码 ...
+    return getAllKVRecords(request, { env });
 }
 
 export async function updateAdminStatus(request, { env }) {
@@ -121,22 +117,39 @@ export async function getAllKVRecords(request, { env }) {
     console.log('getAllKVRecords function called');
     const records = [];
     try {
-        const { keys } = await env.PHONE_KV.list();
-        console.log('KV keys:', keys);
+        if (!env.PHONE_KV) {
+            throw new Error('PHONE_KV is not defined in the environment');
+        }
+        console.log('PHONE_KV exists in env');
 
-        for (const key of keys) {
-            const value = await env.PHONE_KV.get(key);
-            console.log(`Value for key ${key}:`, value);
-            if (value) {
+        let cursor = null;
+        do {
+            const listResult = await env.PHONE_KV.list({ cursor });
+            console.log('KV list result:', listResult);
+
+            for (const key of listResult.keys) {
                 try {
-                    const data = JSON.parse(value);
-                    records.push({ key, value: data });
-                } catch (error) {
-                    console.error(`Error parsing value for key ${key}:`, error);
-                    records.push({ key, value: value });
+                    const value = await env.PHONE_KV.get(key.name);
+                    console.log(`Raw value for key ${key.name}:`, value);
+                    if (value) {
+                        try {
+                            const data = JSON.parse(value);
+                            records.push({ key: key.name, value: data });
+                        } catch (parseError) {
+                            console.error(`Error parsing value for key ${key.name}:`, parseError);
+                            records.push({ key: key.name, value: value });
+                        }
+                    } else {
+                        console.log(`No value found for key ${key.name}`);
+                    }
+                } catch (getError) {
+                    console.error(`Error getting value for key ${key.name}:`, getError);
                 }
             }
-        }
+
+            cursor = listResult.cursor;
+        } while (cursor);
+
     } catch (error) {
         console.error('Error fetching all KV records:', error);
         return new Response(JSON.stringify({ error: error.message }), { 
