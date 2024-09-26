@@ -10,4 +10,7 @@ router.post('/api/submit-code', submitCode);
 router.get('/api/admin/records', getAdminRecords);
 router.post('/api/admin/update-status', updateAdminStatus);
 
-export const onRequest = (context) => router.handle(context.request, context);
+export const onRequest = async ({ request, env }) => {
+  // 将环境变量传递给上下文
+  return router.handle(request, { env });
+};
