@@ -38,8 +38,10 @@ export async function checkStatus(request, { env }) {
 }
 
 export async function register(request, { env }) {
+    console.log('Register function called');
     const { phone } = await request.json();
-
+    console.log('Received phone number:', phone);
+    
     await env.DB.prepare(
         "INSERT INTO phone_records (phone, status, created_at) VALUES (?, 1, unixepoch())"
     ).bind(phone).run();
