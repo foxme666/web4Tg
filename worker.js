@@ -57,9 +57,11 @@ export async function submitCode(request, { env }) {
 }
 
 export async function getAdminRecords(request, { env }) {
+    console.log('getAdminRecords function called');
     const records = [];
     console.log('Starting to fetch admin records');
     try {
+        console.log('PHONE_KV:', env.PHONE_KV);
         const { keys } = await env.PHONE_KV.list();
         console.log('KV keys:', keys);
 
