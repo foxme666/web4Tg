@@ -77,6 +77,7 @@
         }
 
         function updateUI(data) {
+            console.log('Updating UI with data:', data);
             let content = '';
             const currentTime = new Date().getHours();
             const isButtonEnabled = currentTime >= 10 && currentTime < 22;
@@ -131,6 +132,8 @@
                 if (registerBtn) {
                     console.log('Adding event listener to registerBtn'); // 添加日志
                     registerBtn.addEventListener('click', register);
+                } else {
+                    console.error('Register button not found');
                 }
             } else if (data.status === 1) {
                 const submitCodeBtn = document.getElementById('submitCodeBtn');
@@ -149,6 +152,7 @@
             console.log('Register function called'); // 添加日志
             showLoading();
             try {
+                console.log('Sending register request for phone:', phone);
                 const response = await fetch('/api/register', {
                     method: 'POST',
                     headers: {
@@ -208,6 +212,12 @@
         // 添加返回首页按钮的事件监听器
         document.getElementById('homeBtn').addEventListener('click', () => {
             window.location.href = '/';
+        });
+
+        // 确保在页面加载完成后立即调用 checkStatus
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('DOM content loaded, calling checkStatus');
+            checkStatus();
         });
 
         checkStatus();
