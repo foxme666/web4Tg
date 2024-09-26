@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>注册状态</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+    <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
+        <h1 class="text-2xl font-bold mb-6 text-center">注册状态</h1>
+        <div id="statusContainer" class="space-y-4">
+            <!-- 状态内容将通过 JavaScript 动态插入 -->
+        </div>
+    </div>
+
+    <script>
+        const statusContainer = document.getElementById('statusContainer');
+        const urlParams = new URLSearchParams(window.location.search);
+        const phone = urlParams.get('phone');
+
+        async function checkStatus() {
+            try {
+                const response = await fetch(`/api/check-status?phone=${encodeURIComponent(phone)}`);
+                const data = await response.json();
+
+                if (response.ok) {
+                    updateUI(data);
+                } else {
+                    statusContainer.innerHTML = `<p class="text-red-500">${data.message || '获取状态失败,请稍后再试。'}</p>`;
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                statusContainer.innerHTML = '<p class="text-red-500">发生错误,请稍后再试。</p>';
+            }
+        }
+
+        function updateUI(data) {
+            let content = '';
+            const currentTime = new Date().getHours();
+            const isButtonEnabled = currentTime >= 10 && currentTime < 22;
+
+            switch (data.status) {
+                case 0:
+                    content = `
+                        <p>当前状态: 未注册</p>
+                        <button id="registerBtn" class="mt-4 w-full bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2" ${isButtonEnabled ? '' : 'disabled'}>
+                            注册
+                        </button>
+                    `;
+                    break;
+                case 1:
+                    content = `
+                        <p>当前状态: 注册中</p>
+                        <input type="text" id="verificationCode" placeholder="请输入验证码" class="mt-4 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <button id="submitCodeBtn" class="mt-4 w-full bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2" ${isButtonEnabled ? '' : 'disabled'}>
+                            提交验证码
+                        </button>
+                    `;
+                    break;
+                case 2:
+                    content = `
+                        <p>当前状态: 审核中</p>
+                        <p>正在审核您的注册,请等待片刻后刷新页面重新查询。</p>
+                        <button id="refreshBtn" class="mt-4 w-full bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                            刷新
+                        </button>
+                    `;
+                    break;
+                case 3:
+                    content = `
+                        <p>当前状态: 已注册</p>
+                        <p>该手机号已成功注册,请截图该页面。</p>
+                    `;
+                    break;
+                case 4:
+                    content = `
+                        <p>当前状态: 无效</p>
+                        <p>${data.message || '该手机号无效,请尝试使用其他手机号。'}</p>
+                    `;
+                    break;
+                default:
+                    content = '<p>未知状态,请联系管理员。</p>';
+            }
+
+            statusContainer.innerHTML = content;
+
+            if (data.status === 0) {
+                document.getElementById('registerBtn').addEventListener('click', register);
+            } else if (data.status === 1) {
+                document.getElementById('submitCodeBtn').addEventListener('click', submitVerificationCode);
+            } else if (data.status === 2) {
+                document.getElementById('refreshBtn').addEventListener('click', checkStatus);
+            }
+        }
+
+        async function register() {
+            try {
+                const response = await fetch('/api/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ phone }),
+                });
+                
+                if (response.ok) {
+                    alert('已提交,请等待处理');
+                    checkStatus();
+                } else {
+                    const data = await response.json();
+                    alert(data.message || '注册失败,请稍后再试。');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('发生错误,请稍后再试。');
+            }
+        }
+
+        async function submitVerificationCode() {
+            const code = document.getElementById('verificationCode').value;
+            try {
+                const response = await fetch('/api/submit-code', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ phone, code }),
+                });
+                
+                if (response.ok) {
+                    alert('验证码已提交,请等待审核');
+                    checkStatus();
+                } else {
+                    const data = await response.json();
+                    alert(data.message || '提交失败,请稍后再试。');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('发生错误,请稍后再试。');
+            }
+        }
+
+        checkStatus();
+    </script>
+</body>
+</html>

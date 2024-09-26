@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>管理员页面</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100 p-8">
+    <div class="container mx-auto">
+        <h1 class="text-3xl font-bold mb-8">管理员页面</h1>
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-xl font-semibold mb-4">审核中的记录</h2>
+            <div id="recordsContainer" class="space-y-4">
+                <!-- 记录将通过 JavaScript 动态插入 -->
+            </div>
+            <div class="mt-6 flex space-x-4">
+                <button id="approveBtn" class="bg-green-500 text-white py-2 px-4 rounded-md hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2">
+                    批准选中记录
+                </button>
+                <button id="rejectBtn" class="bg-red-500 text-white py-2 px-4 rounded-md hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2">
+                    拒绝选中记录
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let records = [];
+
+        async function fetchRecords() {
+            try {
+                const response = await fetch('/api/admin/records?status=2');
+                if (response.ok) {
+                    records = await response.json();
+                    displayRecords();
+                } else {
+                    console.error('Failed to fetch records');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+
+        function displayRecords() {
+            const container = document.getElementById('recordsContainer');
+            container.innerHTML = records.map((record, index) => `
+                <div class="flex items-center space-x-4 p-4 bg-gray-50 rounded-md">
+                    <input type="checkbox" id="record-${index}" class="record-checkbox">
+                    <label for="record-${index}">
+                        手机号: ${record.phone.number}, 验证码: ${record.phone.code}
+                    </label>
+                </div>
+            `).join('');
+        }
+
+        document.getElementById('approveBtn').addEventListener('click', () => updateStatus(3));
+        document.getElementById('rejectBtn').addEventListener('click', () => updateStatus(4));
+
+        async function updateStatus(newStatus) {
+            const selectedRecords = Array.from(document.querySelectorAll('.record-checkbox:checked'))
+                .map(checkbox => records[parseInt(checkbox.id.split('-')[1])]);
+
+            for (const record of selectedRecords) {
+                try {
+                    const response = await fetch('/api/admin/update-status', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            phone: record.phone.number,
+                            status: newStatus
+                        }),
+                    });
+
+                    if (!response.ok) {
+                        console.error(`Failed to update status for ${record.phone.number}`);
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                }
+            }
+
+            fetchRecords(); // 刷新记录列表
+        }
+
+        fetchRecords(); // 初始加载记录
+    </script>
+</body>
+</html>
