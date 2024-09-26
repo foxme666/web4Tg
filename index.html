@@ -58,9 +58,7 @@
             document.getElementById('phoneForm').addEventListener('submit', async (e) => {
                 e.preventDefault();
                 showLoading();
-                console.log('Verify button clicked');
                 const phone = document.getElementById('phone').value;
-                console.log('Phone number:', phone);
                 
                 try {
                     const response = await fetch('/api/verify-phone', {
@@ -70,14 +68,12 @@
                         },
                         body: JSON.stringify({ phone }),
                     });
-                    console.log('Verify response status:', response.status);
                     
                     const data = await response.json();
-                    console.log('Verify response data:', data);
                     
                     if (response.ok) {
-                        // 验证通过，跳转到新页面
-                        window.location.href = `/register.html?phone=${encodeURIComponent(phone)}`;
+                        // 验证通过，跳转到状态检查页面
+                        window.location.href = `/register_status.html?phone=${encodeURIComponent(phone)}`;
                     } else {
                         // 显示错误消息
                         const errorMessage = document.getElementById('errorMessage');

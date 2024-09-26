@@ -10,9 +10,10 @@
     <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
         <h1 class="text-2xl font-bold mb-6 text-center">注册</h1>
         <p id="phoneDisplay" class="text-center mb-4 font-semibold"></p>
-        <button id="registerBtn" class="w-full bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+        <button id="registerBtn" class="w-full bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2" disabled>
             注册
         </button>
+        <p id="timeMessage" class="mt-2 text-center text-sm text-gray-500"></p>
         <button id="homeBtn" class="mt-4 w-full bg-gray-500 text-white py-2 px-4 rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2">
             返回首页
         </button>
@@ -23,6 +24,20 @@
         const phone = urlParams.get('phone');
 
         document.getElementById('phoneDisplay').textContent = `手机号: ${phone}`;
+
+        function updateButtonState() {
+            const currentHour = new Date().getHours();
+            const registerBtn = document.getElementById('registerBtn');
+            const timeMessage = document.getElementById('timeMessage');
+
+            if (currentHour >= 10 && currentHour < 22) {
+                registerBtn.disabled = false;
+                timeMessage.textContent = '';
+            } else {
+                registerBtn.disabled = true;
+                timeMessage.textContent = '注册功能仅在 10:00 - 22:00 开放';
+            }
+        }
 
         async function register() {
             try {
@@ -51,6 +66,10 @@
         document.getElementById('homeBtn').addEventListener('click', () => {
             window.location.href = '/';
         });
+
+        // 初始化按钮状态并每分钟更新一次
+        updateButtonState();
+        setInterval(updateButtonState, 60000);
     </script>
 </body>
 </html>
