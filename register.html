@@ -166,8 +166,12 @@
         }
 
         async function submitVerificationCode() {
-            showLoading();
             const code = document.getElementById('verificationCode').value;
+            if (!code) {
+                alert('验证码不能为空');
+                return;
+            }
+            showLoading();
             try {
                 const response = await fetch('/api/submit-code', {
                     method: 'POST',

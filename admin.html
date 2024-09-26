@@ -39,8 +39,20 @@
         <h1 class="text-3xl font-bold mb-8">管理员页面</h1>
         <div class="bg-white rounded-lg shadow-md p-6">
             <h2 class="text-xl font-semibold mb-4">所有记录</h2>
-            <div id="recordsContainer" class="space-y-4">
-                <!-- 记录将通过 JavaScript 动态插入 -->
+            <div class="overflow-x-auto">
+                <table class="min-w-full bg-white">
+                    <thead>
+                        <tr>
+                            <th class="py-2 px-4 border-b">选择</th>
+                            <th class="py-2 px-4 border-b">手机号</th>
+                            <th class="py-2 px-4 border-b">状态</th>
+                            <th class="py-2 px-4 border-b">验证码</th>
+                        </tr>
+                    </thead>
+                    <tbody id="recordsContainer">
+                        <!-- 记录将通过 JavaScript 动态插入 -->
+                    </tbody>
+                </table>
             </div>
             <div class="mt-6 flex justify-between items-center">
                 <div class="flex space-x-4">
@@ -77,11 +89,11 @@
             document.getElementById('loadingOverlay').classList.remove('show');
         }
 
-        async function fetchRecords() {
+        async function fetchRecords(cursor = null) {
             showLoading();
             try {
                 console.log('Fetching records...');
-                const response = await fetch('/api/admin/records');
+                const response = await fetch(`/api/admin/records?cursor=${cursor}&limit=10`);
                 console.log('Response status:', response.status);
                 const text = await response.text();
                 console.log('Response text:', text);
@@ -90,28 +102,29 @@
                     try {
                         const data = JSON.parse(text);
                         console.log('Parsed data:', data);
-                        if (Array.isArray(data)) {
-                            records = data.filter(record => record && record.value && record.value.phone);
+                        if (Array.isArray(data.records)) {
+                            records = data.records.filter(record => record && record.value && record.value.phone);
                             console.log('Filtered records:', records);
                             displayRecords();
+                            updatePagination(data.cursor);
                         } else if (data.error) {
                             console.error('Server error:', data.error);
-                            document.getElementById('recordsContainer').textContent = `错误: ${data.error}`;
+                            document.getElementById('recordsContainer').innerHTML = `<tr><td colspan="4" class="text-red-500">${data.error}</td></tr>`;
                         } else {
                             console.error('Unexpected data format:', data);
-                            document.getElementById('recordsContainer').textContent = '获取记录失败，数据格式不正确';
+                            document.getElementById('recordsContainer').innerHTML = '<tr><td colspan="4" class="text-red-500">获取记录失败，数据格式不正确</td></tr>';
                         }
                     } catch (error) {
                         console.error('Error parsing JSON:', error);
-                        document.getElementById('recordsContainer').textContent = '解析数据失败，请刷新页面重试';
+                        document.getElementById('recordsContainer').innerHTML = '<tr><td colspan="4" class="text-red-500">解析数据失败，请刷新页面重试</td></tr>';
                     }
                 } else {
                     console.error('Failed to fetch records', text);
-                    document.getElementById('recordsContainer').textContent = '获取记录失败，请刷新页面重试';
+                    document.getElementById('recordsContainer').innerHTML = '<tr><td colspan="4" class="text-red-500">获取记录失败，请刷新页面重试</td></tr>';
                 }
             } catch (error) {
                 console.error('Error fetching records:', error);
-                document.getElementById('recordsContainer').textContent = '发生错误，请刷新页面重试';
+                document.getElementById('recordsContainer').innerHTML = '<tr><td colspan="4" class="text-red-500">发生错误，请刷新页面重试</td></tr>';
             } finally {
                 hideLoading();
             }
@@ -124,24 +137,24 @@
             const pageRecords = records.slice(startIndex, endIndex);
 
             if (pageRecords.length === 0) {
-                container.innerHTML = '<p class="fade-in">暂无记录</p>';
+                container.innerHTML = '<tr><td colspan="4" class="fade-in">暂无记录</td></tr>';
                 return;
             }
 
             const newContent = pageRecords.map((record, index) => {
                 if (!record || !record.value || !record.value.phone) {
                     console.error('Invalid record:', record);
-                    return '<div class="p-4 bg-red-100 text-red-700 rounded-md fade-in">无效记录</div>';
+                    return '<tr><td colspan="4" class="p-4 bg-red-100 text-red-700 rounded-md fade-in">无效记录</td></tr>';
                 }
                 return `
-                    <div class="flex items-center space-x-4 p-4 bg-gray-50 rounded-md fade-in">
-                        <input type="checkbox" id="record-${startIndex + index}" class="record-checkbox">
-                        <label for="record-${startIndex + index}">
-                            手机号: ${record.value.phone.number}, 
-                            状态: ${getStatusText(record.value.status)}, 
-                            验证码: ${record.value.phone.code || '无'}
-                        </label>
-                    </div>
+                    <tr class="fade-in">
+                        <td class="py-2 px-4 border-b">
+                            <input type="checkbox" id="record-${startIndex + index}" class="record-checkbox">
+                        </td>
+                        <td class="py-2 px-4 border-b">${record.value.phone.number}</td>
+                        <td class="py-2 px-4 border-b">${getStatusText(record.value.status)}</td>
+                        <td class="py-2 px-4 border-b">${record.value.phone.code || '无'}</td>
+                    </tr>
                 `;
             }).join('');
 
@@ -166,24 +179,24 @@
             return statusMap[status] || '未知状态';
         }
 
-        function updatePagination() {
-            const totalPages = Math.ceil(records.length / recordsPerPage);
-            document.getElementById('pageInfo').textContent = `${currentPage} / ${totalPages}`;
-            document.getElementById('prevBtn').disabled = currentPage === 1;
-            document.getElementById('nextBtn').disabled = currentPage === totalPages;
+        function updatePagination(cursor) {
+            const nextBtn = document.getElementById('nextBtn');
+            if (cursor) {
+                nextBtn.dataset.cursor = cursor;
+                nextBtn.disabled = false;
+            } else {
+                nextBtn.disabled = true;
+            }
         }
+
+        document.getElementById('nextBtn').addEventListener('click', () => {
+            const cursor = document.getElementById('nextBtn').dataset.cursor;
+            fetchRecords(cursor);
+        });
 
         document.getElementById('prevBtn').addEventListener('click', () => {
             if (currentPage > 1) {
                 currentPage--;
-                displayRecords();
-            }
-        });
-
-        document.getElementById('nextBtn').addEventListener('click', () => {
-            const totalPages = Math.ceil(records.length / recordsPerPage);
-            if (currentPage < totalPages) {
-                currentPage++;
                 displayRecords();
             }
         });

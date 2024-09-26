@@ -58,7 +58,52 @@ export async function submitCode(request, { env }) {
 
 export async function getAdminRecords(request, { env }) {
     console.log('getAdminRecords function called');
-    return getAllKVRecords(request, { env });
+    const url = new URL(request.url);
+    const cursor = url.searchParams.get('cursor') || null;
+    const limit = parseInt(url.searchParams.get('limit')) || 10;
+
+    const records = [];
+    try {
+        if (!env.PHONE_KV) {
+            throw new Error('PHONE_KV is not defined in the environment');
+        }
+        console.log('PHONE_KV exists in env');
+
+        const listResult = await env.PHONE_KV.list({ cursor, limit });
+        console.log('KV list result:', listResult);
+
+        for (const key of listResult.keys) {
+            try {
+                const value = await env.PHONE_KV.get(key.name);
+                console.log(`Raw value for key ${key.name}:`, value);
+                if (value) {
+                    try {
+                        const data = JSON.parse(value);
+                        records.push({ key: key.name, value: data });
+                    } catch (parseError) {
+                        console.error(`Error parsing value for key ${key.name}:`, parseError);
+                        records.push({ key: key.name, value: value });
+                    }
+                } else {
+                    console.log(`No value found for key ${key.name}`);
+                }
+            } catch (getError) {
+                console.error(`Error getting value for key ${key.name}:`, getError);
+            }
+        }
+
+        return new Response(JSON.stringify({ records, cursor: listResult.cursor }), { 
+            status: 200,
+            headers: { 'Content-Type': 'application/json' }
+        });
+
+    } catch (error) {
+        console.error('Error fetching all KV records:', error);
+        return new Response(JSON.stringify({ error: error.message }), { 
+            status: 500,
+            headers: { 'Content-Type': 'application/json' }
+        });
+    }
 }
 
 export async function updateAdminStatus(request, { env }) {
