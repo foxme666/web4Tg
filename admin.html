@@ -79,6 +79,7 @@
     <script>
         let records = [];
         let currentPage = 1;
+        let totalPages = 1;
         const recordsPerPage = 10;
 
         function showLoading() {
@@ -89,11 +90,11 @@
             document.getElementById('loadingOverlay').classList.remove('show');
         }
 
-        async function fetchRecords(cursor = null) {
+        async function fetchRecords(page = 1) {
             showLoading();
             try {
                 console.log('Fetching records...');
-                const response = await fetch(`/api/admin/records?cursor=${cursor}&limit=10`);
+                const response = await fetch(`/api/admin/records?page=${page}&limit=${recordsPerPage}`);
                 console.log('Response status:', response.status);
                 const text = await response.text();
                 console.log('Response text:', text);
@@ -103,10 +104,12 @@
                         const data = JSON.parse(text);
                         console.log('Parsed data:', data);
                         if (Array.isArray(data.records)) {
-                            records = data.records.filter(record => record && record.value && record.value.phone);
+                            records = data.records;
+                            currentPage = data.currentPage;
+                            totalPages = data.totalPages;
                             console.log('Filtered records:', records);
                             displayRecords();
-                            updatePagination(data.cursor);
+                            updatePagination();
                         } else if (data.error) {
                             console.error('Server error:', data.error);
                             document.getElementById('recordsContainer').innerHTML = `<tr><td colspan="4" class="text-red-500">${data.error}</td></tr>`;
@@ -132,40 +135,34 @@
 
         function displayRecords() {
             const container = document.getElementById('recordsContainer');
-            const startIndex = (currentPage - 1) * recordsPerPage;
-            const endIndex = startIndex + recordsPerPage;
-            const pageRecords = records.slice(startIndex, endIndex);
 
-            if (pageRecords.length === 0) {
+            if (records.length === 0) {
                 container.innerHTML = '<tr><td colspan="4" class="fade-in">暂无记录</td></tr>';
                 return;
             }
 
-            const newContent = pageRecords.map((record, index) => {
-                if (!record || !record.value || !record.value.phone) {
+            const newContent = records.map((record, index) => {
+                if (!record || !record.phone) {
                     console.error('Invalid record:', record);
                     return '<tr><td colspan="4" class="p-4 bg-red-100 text-red-700 rounded-md fade-in">无效记录</td></tr>';
                 }
                 return `
                     <tr class="fade-in">
                         <td class="py-2 px-4 border-b">
-                            <input type="checkbox" id="record-${startIndex + index}" class="record-checkbox">
+                            <input type="checkbox" id="record-${index}" class="record-checkbox">
                         </td>
-                        <td class="py-2 px-4 border-b">${record.value.phone.number}</td>
-                        <td class="py-2 px-4 border-b">${getStatusText(record.value.status)}</td>
-                        <td class="py-2 px-4 border-b">${record.value.phone.code || '无'}</td>
+                        <td class="py-2 px-4 border-b">${record.phone}</td>
+                        <td class="py-2 px-4 border-b">${getStatusText(record.status)}</td>
+                        <td class="py-2 px-4 border-b">${record.code || '无'}</td>
                     </tr>
                 `;
             }).join('');
 
-            // 使用 setTimeout 来确保 DOM 更新和动画效果的顺序正确
             container.style.opacity = '0';
             setTimeout(() => {
                 container.innerHTML = newContent;
                 container.style.opacity = '1';
             }, 50);
-
-            updatePagination();
         }
 
         function getStatusText(status) {
@@ -179,25 +176,26 @@
             return statusMap[status] || '未知状态';
         }
 
-        function updatePagination(cursor) {
+        function updatePagination() {
+            const prevBtn = document.getElementById('prevBtn');
             const nextBtn = document.getElementById('nextBtn');
-            if (cursor) {
-                nextBtn.dataset.cursor = cursor;
-                nextBtn.disabled = false;
-            } else {
-                nextBtn.disabled = true;
-            }
+            const pageInfo = document.getElementById('pageInfo');
+
+            prevBtn.disabled = currentPage === 1;
+            nextBtn.disabled = currentPage === totalPages;
+
+            pageInfo.textContent = `第 ${currentPage} 页，共 ${totalPages} 页`;
         }
 
         document.getElementById('nextBtn').addEventListener('click', () => {
-            const cursor = document.getElementById('nextBtn').dataset.cursor;
-            fetchRecords(cursor);
+            if (currentPage < totalPages) {
+                fetchRecords(currentPage + 1);
+            }
         });
 
         document.getElementById('prevBtn').addEventListener('click', () => {
             if (currentPage > 1) {
-                currentPage--;
-                displayRecords();
+                fetchRecords(currentPage - 1);
             }
         });
 
@@ -217,13 +215,13 @@
                             'Content-Type': 'application/json',
                         },
                         body: JSON.stringify({
-                            phone: record.value.phone.number,  // 确保访问正确的结构
+                            phone: record.phone,
                             status: newStatus
                         }),
                     });
 
                     if (!response.ok) {
-                        console.error(`Failed to update status for ${record.value.phone.number}`);
+                        console.error(`Failed to update status for ${record.phone}`);
                     }
                 } catch (error) {
                     console.error('Error:', error);
@@ -235,7 +233,7 @@
             hideLoading();
         }
 
-        fetchRecords().then(() => displayRecords()); // 初始加载记录
+        fetchRecords(1); // 初始加载记录，从第一页开始
     </script>
 </body>
 </html>

@@ -1,0 +1,7 @@
+name = "web4tg"
+compatibility_date = "2024-09-01"
+
+[[d1_databases]]
+binding = "DB" # 这个名称应该与您在代码中使用的环境变量名称匹配
+database_name = "phone_tg"
+database_id = "f70dc44e-5fd9-4192-869a-4bc97c1c4f7b"

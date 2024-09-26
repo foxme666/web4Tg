@@ -1,5 +1,5 @@
 import { Router } from 'itty-router';
-import { verifyPhone, checkStatus, register, submitCode, getAdminRecords, updateAdminStatus, testKV, getAllKVRecords } from '../../worker.js';
+import { verifyPhone, checkStatus, register, submitCode, getAdminRecords, updateAdminStatus } from '../../worker.js';
 
 const router = Router();
 
@@ -10,7 +10,6 @@ router.post('/api/submit-code', submitCode);
 router.get('/api/admin/records', async (request, env) => {
   console.log('Admin records route matched');
   console.log('Request URL:', request.url);
-  console.log('Environment:', JSON.stringify(env));
   try {
     const response = await getAdminRecords(request, env);
     console.log('Response:', response);
@@ -24,13 +23,10 @@ router.get('/api/admin/records', async (request, env) => {
   }
 });
 router.post('/api/admin/update-status', updateAdminStatus);
-router.get('/api/test-kv', testKV);
-router.get('/api/test-all-kv', getAllKVRecords);
 
 export const onRequest = async (context) => {
   console.log('Request received:', context.request.url);
   console.log('Request method:', context.request.method);
-  console.log('Environment in onRequest:', JSON.stringify(context.env));
   try {
     const response = await router.handle(context.request, context);
     console.log('Response status:', response.status);
