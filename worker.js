@@ -74,14 +74,33 @@ export async function getAdminRecords(request, { env }) {
     const url = new URL(request.url);
     const page = parseInt(url.searchParams.get('page')) || 1;
     const limit = parseInt(url.searchParams.get('limit')) || 20;
-    const offset = (page - 1) * limit;
+    const phone = url.searchParams.get('phone') || '';
+    const status = url.searchParams.get('status') || '';
 
-    const { results } = await env.DB.prepare(
-        "SELECT *, (SELECT COUNT(*) FROM phone_records WHERE status = 2) as total FROM phone_records WHERE status = 2 ORDER BY created_at DESC LIMIT ? OFFSET ?"
-    ).bind(limit, offset).all();
+    let query = "SELECT * FROM phone_records WHERE 1=1";
+    const params = [];
 
-    const total = results.length > 0 ? results[0].total : 0;
-    const totalPages = Math.ceil(total / limit);
+    if (phone) {
+        query += " AND phone LIKE ?";
+        params.push(`%${phone}%`);
+    }
+
+    if (status !== '') {
+        query += " AND status = ?";
+        params.push(parseInt(status));
+    }
+
+    // 计算总记录数
+    const countQuery = query.replace("SELECT *", "SELECT COUNT(*) as count");
+    const { count } = await env.DB.prepare(countQuery).bind(...params).first();
+
+    // 添加排序和分页
+    query += " ORDER BY mod_at DESC LIMIT ? OFFSET ?";
+    params.push(limit, (page - 1) * limit);
+
+    const { results } = await env.DB.prepare(query).bind(...params).all();
+
+    const totalPages = Math.ceil(count / limit);
 
     const records = results.map(record => ({
         ...record,
@@ -92,7 +111,8 @@ export async function getAdminRecords(request, { env }) {
     return new Response(JSON.stringify({ 
         records: records, 
         currentPage: page, 
-        totalPages: totalPages 
+        totalPages: totalPages,
+        totalCount: count
     }), { 
         status: 200,
         headers: { 'Content-Type': 'application/json' }
@@ -162,10 +182,9 @@ async function handleAdminRecords(request, env) {
         params.push(`%${phone}%`);
     }
 
-    if (status) {
-        const statusArray = status.split(',').map(Number);
-        query += ` AND status IN (${statusArray.map(() => '?').join(',')})`;
-        params.push(...statusArray);
+    if (status !== '') {
+        query += " AND status = ?";
+        params.push(parseInt(status));
     }
 
     query += " ORDER BY mod_at DESC LIMIT ? OFFSET ?";
