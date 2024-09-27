@@ -3,19 +3,47 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>管理员页面</title>
-    <!-- 使用本地Tailwind CSS文件 -->
-    <link href="/css/tailwind.min.css" rel="stylesheet">
-    <!-- 预加载关键资源 -->
-    <link rel="preload" href="/css/tailwind.min.css" as="style">
-    <link rel="preload" href="/js/admin.js" as="script">
+    <title>一只狐狸</title>
+    <link rel="icon" href="/favicon.ico" type="image/x-icon">
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <style>
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
+        button {
+            transition: background 0.3s ease, transform 0.1s ease;
         }
-        .fade-in {
-            animation: fadeIn 0.3s ease-in-out;
+        button:hover {
+            background: #0056b3;
+        }
+        button:active {
+            transform: scale(0.98);
+        }
+        #toast-container {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+        }
+        #toast {
+            background-color: rgba(0, 0, 0, 0.8);
+            color: #ffffff;
+            text-align: center;
+            border-radius: 20px;
+            padding: 12px 20px;
+            font-size: 16px;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            opacity: 0;
+            transform: translateY(-20px) scale(0.8);
+            transition: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+        #toast.show {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+        #toast.hide {
+            opacity: 0;
+            transform: translateY(-20px) scale(0.8);
         }
         .loading-overlay {
             position: fixed;
@@ -39,7 +67,16 @@
     <div class="loading-overlay" id="loadingOverlay">
         <div class="loader">加载中...</div>
     </div>
-    <div class="container mx-auto">
+    <div id="loginContainer" class="container mx-auto max-w-md">
+        <h1 class="text-3xl font-bold mb-8 text-center">管理员登录</h1>
+        <form id="loginForm" class="bg-white rounded-lg shadow-md p-6">
+            <input type="password" id="adminPassword" placeholder="请输入管理员密码" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4">
+            <button type="submit" class="w-full bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                登录
+            </button>
+        </form>
+    </div>
+    <div id="adminContainer" class="container mx-auto hidden">
         <h1 class="text-3xl font-bold mb-8">管理员页面</h1>
         <div class="bg-white rounded-lg shadow-md p-6">
             <h2 class="text-xl font-semibold mb-4">所有记录</h2>
@@ -69,6 +106,9 @@
                     <button id="rejectBtn" class="bg-red-500 text-white py-2 px-4 rounded-md hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2">
                         拒绝选中记录
                     </button>
+                    <button id="resendBtn" class="bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                        重新接收
+                    </button>
                 </div>
                 <div class="flex space-x-2">
                     <button id="prevBtn" class="bg-gray-300 text-gray-700 py-2 px-4 rounded-md hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2">
@@ -81,13 +121,216 @@
                 </div>
             </div>
         </div>
-        <!-- 添加返回首页按钮 -->
         <button id="homeBtn" class="mt-6 bg-gray-500 text-white py-2 px-4 rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2">
             返回首页
         </button>
     </div>
 
-    <!-- 使用外部JavaScript文件 -->
-    <script src="/js/admin.js"></script>
+    <div id="toast-container">
+        <div id="toast"></div>
+    </div>
+
+    <script>
+        let records = [];
+        let currentPage = 1;
+        let totalPages = 1;
+        const recordsPerPage = 10;
+
+        function showLoading() {
+            document.getElementById('loadingOverlay').classList.add('show');
+        }
+
+        function hideLoading() {
+            document.getElementById('loadingOverlay').classList.remove('show');
+        }
+
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.remove('hide');
+            toast.classList.add('show');
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+                toast.classList.add('hide');
+            }, 2000);
+
+            setTimeout(() => {
+                toast.classList.remove('hide');
+            }, 2500);
+        }
+
+        async function fetchRecords(page = 1) {
+            showLoading();
+            try {
+                const response = await fetch(`/api/admin/records?page=${page}&limit=${recordsPerPage}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    records = data.records;
+                    currentPage = data.currentPage;
+                    totalPages = data.totalPages;
+                    displayRecords();
+                    updatePagination();
+                } else {
+                    console.error('Failed to fetch records');
+                    showToast('获取记录失败，请刷新页面重试');
+                }
+            } catch (error) {
+                console.error('Error fetching records:', error);
+                showToast('发生错误，请刷新页面重试');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        function displayRecords() {
+            const container = document.getElementById('recordsContainer');
+            container.innerHTML = '';
+
+            if (records.length === 0) {
+                container.innerHTML = '<tr><td colspan="5" class="py-3 px-6 text-center">暂无记录</td></tr>';
+                return;
+            }
+
+            records.forEach((record, index) => {
+                const row = document.createElement('tr');
+                row.className = 'border-b border-gray-200 hover:bg-gray-100';
+                row.innerHTML = `
+                    <td class="py-3 px-6 text-left whitespace-nowrap">
+                        <input type="checkbox" id="record-${index}" class="record-checkbox form-checkbox h-5 w-5 text-blue-600">
+                    </td>
+                    <td class="py-3 px-6 text-left">${record.phone}</td>
+                    <td class="py-3 px-6 text-left">${getStatusText(record.status)}</td>
+                    <td class="py-3 px-6 text-left">${record.code || '无'}</td>
+                    <td class="py-3 px-6 text-left">${formatDate(record.mod_at)}</td>
+                `;
+                container.appendChild(row);
+            });
+        }
+
+        function getStatusText(status) {
+            const statusMap = {
+                0: '未注册',
+                1: '注册中',
+                2: '审核中',
+                3: '已注册',
+                4: '无效'
+            };
+            return statusMap[status] || '未知状态';
+        }
+
+        function formatDate(mod_at) {
+            const date = new Date(mod_at);
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            const hours = String(date.getHours()).padStart(2, '0');
+            const minutes = String(date.getMinutes()).padStart(2, '0');
+            const seconds = String(date.getSeconds()).padStart(2, '0');
+
+            return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+        }
+
+        function updatePagination() {
+            const prevBtn = document.getElementById('prevBtn');
+            const nextBtn = document.getElementById('nextBtn');
+            const pageInfo = document.getElementById('pageInfo');
+
+            prevBtn.disabled = currentPage === 1;
+            nextBtn.disabled = currentPage === totalPages;
+
+            pageInfo.textContent = `第 ${currentPage} 页，共 ${totalPages} 页`;
+        }
+
+        document.getElementById('selectAll').addEventListener('change', function() {
+            const checkboxes = document.querySelectorAll('.record-checkbox');
+            checkboxes.forEach(checkbox => checkbox.checked = this.checked);
+        });
+
+        document.getElementById('nextBtn').addEventListener('click', () => {
+            if (currentPage < totalPages) {
+                fetchRecords(currentPage + 1);
+            }
+        });
+
+        document.getElementById('prevBtn').addEventListener('click', () => {
+            if (currentPage > 1) {
+                fetchRecords(currentPage - 1);
+            }
+        });
+
+        document.getElementById('approveBtn').addEventListener('click', () => updateStatus(3));
+        document.getElementById('rejectBtn').addEventListener('click', () => updateStatus(4));
+        document.getElementById('resendBtn').addEventListener('click', () => updateStatus(1));
+
+        async function updateStatus(newStatus) {
+            showLoading();
+            const selectedRecords = Array.from(document.querySelectorAll('.record-checkbox:checked'))
+                .map(checkbox => records[parseInt(checkbox.id.split('-')[1])]);
+
+            for (const record of selectedRecords) {
+                try {
+                    const response = await fetch('/api/admin/update-status', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            phone: record.phone,
+                            status: newStatus
+                        }),
+                    });
+
+                    if (!response.ok) {
+                        console.error(`Failed to update status for ${record.phone}`);
+                        showToast(`更新 ${record.phone} 状态失败`);
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    showToast('发生错误，请稍后再试');
+                }
+            }
+
+            await fetchRecords(currentPage);
+            hideLoading();
+            showToast('状态更新成功');
+        }
+
+        document.getElementById('homeBtn').addEventListener('click', () => {
+            window.location.href = '/';
+        });
+
+        async function login(password) {
+            showLoading();
+            try {
+                const response = await fetch('/api/admin/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ password }),
+                });
+                
+                if (response.ok) {
+                    document.getElementById('loginContainer').classList.add('hidden');
+                    document.getElementById('adminContainer').classList.remove('hidden');
+                    fetchRecords(1);
+                } else {
+                    showToast('密码错误，请重试');
+                }
+            } catch (error) {
+                console.error('Login error:', error);
+                showToast('登录失败，请稍后重试');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const password = document.getElementById('adminPassword').value;
+            await login(password);
+        });
+    </script>
 </body>
 </html>

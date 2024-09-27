@@ -3,8 +3,49 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>注册完成</title>
+    <title>一只狐狸</title>
+    <link rel="icon" href="/favicon.ico" type="image/x-icon">
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        button {
+            transition: background 0.3s ease, transform 0.1s ease;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        button:active {
+            transform: scale(0.98);
+        }
+        #toast-container {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+        }
+        #toast {
+            background-color: rgba(0, 0, 0, 0.8);
+            color: #ffffff;
+            text-align: center;
+            border-radius: 20px;
+            padding: 12px 20px;
+            font-size: 16px;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            opacity: 0;
+            transform: translateY(-20px) scale(0.8);
+            transition: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+        #toast.show {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+        #toast.hide {
+            opacity: 0;
+            transform: translateY(-20px) scale(0.8);
+        }
+    </style>
 </head>
 <body class="bg-gray-100 flex items-center justify-center min-h-screen">
     <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
@@ -16,6 +57,10 @@
         </button>
     </div>
 
+    <div id="toast-container">
+        <div id="toast"></div>
+    </div>
+
     <script>
         const urlParams = new URLSearchParams(window.location.search);
         const phone = urlParams.get('phone');
@@ -25,6 +70,22 @@
         document.getElementById('homeBtn').addEventListener('click', () => {
             window.location.href = '/';
         });
+
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.remove('hide');
+            toast.classList.add('show');
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+                toast.classList.add('hide');
+            }, 2000);
+
+            setTimeout(() => {
+                toast.classList.remove('hide');
+            }, 2500);
+        }
     </script>
 </body>
 </html>

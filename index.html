@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>用户注册</title>
+    <title>一只狐狸</title>
+    <link rel="icon" href="/favicon.ico" type="image/x-icon">
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <style>
         .loading-overlay {
@@ -21,6 +22,51 @@
         }
         .loading-overlay.show {
             display: flex;
+        }
+
+        button {
+            transition: background 0.3s ease, transform 0.1s ease;
+        }
+
+        button:hover {
+            background: #0056b3;
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        #toast-container {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+        }
+
+        #toast {
+            background-color: rgba(0, 0, 0, 0.8);
+            color: #ffffff;
+            text-align: center;
+            border-radius: 20px;
+            padding: 12px 20px;
+            font-size: 16px;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            opacity: 0;
+            transform: translateY(-20px) scale(0.8);
+            transition: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+
+        #toast.show {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+
+        #toast.hide {
+            opacity: 0;
+            transform: translateY(-20px) scale(0.8);
         }
     </style>
 </head>
@@ -42,7 +88,10 @@
                 验证
             </button>
         </form>
-        <p id="errorMessage" class="mt-4 text-red-500 text-center hidden"></p>
+    </div>
+
+    <div id="toast-container">
+        <div id="toast"></div>
     </div>
 
     <script>
@@ -52,6 +101,22 @@
 
         function hideLoading() {
             document.getElementById('loadingOverlay').classList.remove('show');
+        }
+
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.remove('hide');
+            toast.classList.add('show');
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+                toast.classList.add('hide');
+            }, 2000);
+
+            setTimeout(() => {
+                toast.classList.remove('hide');
+            }, 2500);
         }
 
         document.addEventListener('DOMContentLoaded', () => {
@@ -76,15 +141,11 @@
                         window.location.href = `/register_status.html?phone=${encodeURIComponent(phone)}`;
                     } else {
                         // 显示错误消息
-                        const errorMessage = document.getElementById('errorMessage');
-                        errorMessage.textContent = data.message;
-                        errorMessage.classList.remove('hidden');
+                        showToast(data.message || '验证失败，请稍后重试');
                     }
                 } catch (error) {
                     console.error('Verify error:', error);
-                    const errorMessage = document.getElementById('errorMessage');
-                    errorMessage.textContent = '发生错误，请稍后重试';
-                    errorMessage.classList.remove('hidden');
+                    showToast('发生错误，请稍后重试');
                 } finally {
                     hideLoading();
                 }
