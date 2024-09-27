@@ -61,7 +61,8 @@ export const onRequest = async (context) => {
         let html = await fetch(request).then(res => res.text());
         
         // 替换 ABOUT_URL 占位符
-        html = html.replace(/\{\{\s*ABOUT_URL\s*\}\}/g, env.ABOUT_URL || ABOUT_URL || '#');
+        const aboutUrl = env.ABOUT_URL || ABOUT_URL || '#';
+        html = html.replace(/\{\{\s*ABOUT_URL\s*\}\}/g, aboutUrl);
 
         response = new Response(html, {
           headers: { 'Content-Type': 'text/html' },
