@@ -6,7 +6,6 @@
     <title>一只狐狸</title>
     <link rel="icon" href="/favicon.ico" type="image/x-icon">
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/slim-select@1.27.0/dist/slimselect.min.css" rel="stylesheet">
     <style>
         button {
             transition: background 0.3s ease, transform 0.1s ease;
@@ -80,22 +79,6 @@
     <div id="adminContainer" class="container mx-auto hidden">
         <h1 class="text-3xl font-bold mb-8">管理员页面</h1>
         <div class="bg-white rounded-lg shadow-md p-6">
-            <div class="mb-4 flex items-center space-x-4">
-                <input type="text" id="phoneQuery" placeholder="输入手机号查询" class="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                <div class="flex items-center space-x-2">
-                    <span class="text-gray-700">状态：</span>
-                    <select id="statusQuery" multiple class="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                        <option value="0">未注册</option>
-                        <option value="1">注册中</option>
-                        <option value="2">审核中</option>
-                        <option value="3">已注册</option>
-                        <option value="4">无效</option>
-                    </select>
-                </div>
-                <button id="searchBtn" class="bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
-                    查询
-                </button>
-            </div>
             <h2 class="text-xl font-semibold mb-4">所有记录</h2>
             <div class="overflow-x-auto">
                 <table class="min-w-full bg-white">
@@ -147,7 +130,6 @@
         <div id="toast"></div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/slim-select@1.27.0/dist/slimselect.min.js"></script>
     <script>
         let records = [];
         let currentPage = 1;
@@ -212,18 +194,7 @@
         async function fetchRecords(page = 1) {
             showLoading();
             try {
-                const phone = document.getElementById('phoneQuery').value;
-                const statusSelect = document.getElementById('statusQuery');
-                const selectedStatuses = Array.from(statusSelect.selectedOptions).map(option => option.value);
-                
-                const queryParams = new URLSearchParams({
-                    page: page,
-                    limit: recordsPerPage,
-                    phone: phone,
-                    status: selectedStatuses.join(',')
-                });
-
-                const response = await fetch(`/api/admin/records?${queryParams}`);
+                const response = await fetch(`/api/admin/records?page=${page}&limit=${recordsPerPage}`);
                 if (response.ok) {
                     const data = await response.json();
                     records = data.records;
@@ -364,17 +335,6 @@
 
         document.getElementById('homeBtn').addEventListener('click', () => {
             window.location.href = '/';
-        });
-
-        document.getElementById('searchBtn').addEventListener('click', () => {
-            fetchRecords(1);
-        });
-
-        // 初始化多选框
-        new SlimSelect({
-            select: '#statusQuery',
-            placeholder: '选择状态',
-            closeOnSelect: false,
         });
     </script>
 </body>
