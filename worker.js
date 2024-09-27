@@ -1,4 +1,4 @@
-import { TG_BOT_TOKEN, TG_CHAT_ID } from './config.js';
+import { TG_BOT_TOKEN, TG_CHAT_ID, ABOUT_URL } from './config.js';
 
 export async function verifyPhone(request, { env }) {
     const { phone } = await request.json();
@@ -200,4 +200,24 @@ async function handleAdminRecords(request, env) {
     }), {
         headers: { 'Content-Type': 'application/json' }
     });
+}
+
+async function handleRequest(request, env) {
+    // ... 现有的请求处理逻辑 ...
+
+    let response;
+    // 假设这里有一些逻辑来决定应该返回哪个 HTML 文件
+
+    if (response) {
+        let html = await response.text();
+        
+        // 替换 ABOUT_URL 占位符
+        html = html.replace('{{ ABOUT_URL }}', env.ABOUT_URL || ABOUT_URL || '#');
+
+        return new Response(html, {
+            headers: { 'Content-Type': 'text/html' },
+        });
+    }
+
+    // ... 其他响应处理 ...
 }

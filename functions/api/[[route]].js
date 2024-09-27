@@ -1,5 +1,6 @@
 import { Router } from 'itty-router';
 import { verifyPhone, checkStatus, register, submitCode, getAdminRecords, updateAdminStatus, getTimeLimitEnabled } from '../../worker.js';
+import { ABOUT_URL } from '../../config.js';
 
 const router = Router();
 
@@ -40,3 +41,16 @@ export const onRequest = async (context) => {
     });
   }
 };
+
+export async function onRequest(context) {
+  // ... 现有的请求处理逻辑 ...
+
+  let html = // ... 获取 HTML 内容 ...
+
+  // 替换 ABOUT_URL 占位符
+  html = html.replace('{{ ABOUT_URL }}', context.env.ABOUT_URL || ABOUT_URL || '#');
+
+  return new Response(html, {
+    headers: { 'Content-Type': 'text/html' },
+  });
+}
