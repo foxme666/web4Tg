@@ -117,7 +117,30 @@
     </div>
 
     <script>
-        // 保持原有的 JavaScript 代码不变
+        const urlParams = new URLSearchParams(window.location.search);
+        const phone = urlParams.get('phone');
+
+        document.getElementById('phoneDisplay').textContent = `手机号: ${phone}`;
+
+        document.getElementById('homeBtn').addEventListener('click', () => {
+            window.location.href = '/';
+        });
+
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.remove('hide');
+            toast.classList.add('show');
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+                toast.classList.add('hide');
+            }, 2000);
+
+            setTimeout(() => {
+                toast.classList.remove('hide');
+            }, 2500);
+        }
     </script>
 </body>
 </html>

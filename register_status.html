@@ -162,7 +162,60 @@
     </div>
 
     <script>
-        // 保持原有的 JavaScript 代码不变
+        const urlParams = new URLSearchParams(window.location.search);
+        const phone = urlParams.get('phone');
+
+        async function checkStatus() {
+            try {
+                const response = await fetch(`/api/check-status?phone=${encodeURIComponent(phone)}`);
+                const data = await response.json();
+
+                if (response.ok) {
+                    switch (data.status) {
+                        case 0:
+                            window.location.href = `/register_new.html?phone=${encodeURIComponent(phone)}`;
+                            break;
+                        case 1:
+                            window.location.href = `/register_pending.html?phone=${encodeURIComponent(phone)}`;
+                            break;
+                        case 2:
+                            window.location.href = `/register_reviewing.html?phone=${encodeURIComponent(phone)}`;
+                            break;
+                        case 3:
+                            window.location.href = `/register_completed.html?phone=${encodeURIComponent(phone)}`;
+                            break;
+                        case 4:
+                            window.location.href = `/register_invalid.html?phone=${encodeURIComponent(phone)}&message=${encodeURIComponent(data.message || '该手机号无效')}`;
+                            break;
+                        default:
+                            showToast('未知状态，请联系管理员。');
+                    }
+                } else {
+                    showToast(data.message || '获取状态失败，请稍后再试。');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showToast('发生错误，请稍后再试。');
+            }
+        }
+
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.remove('hide');
+            toast.classList.add('show');
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+                toast.classList.add('hide');
+            }, 2000);
+
+            setTimeout(() => {
+                toast.classList.remove('hide');
+            }, 2500);
+        }
+
+        document.addEventListener('DOMContentLoaded', checkStatus);
     </script>
 </body>
 </html>

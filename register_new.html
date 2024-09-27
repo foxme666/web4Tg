@@ -120,7 +120,80 @@
     </div>
 
     <script>
-        // 保持原有的 JavaScript 代码不变
+        const urlParams = new URLSearchParams(window.location.search);
+        const phone = urlParams.get('phone');
+
+        document.getElementById('phoneDisplay').textContent = `手机号: ${phone}`;
+
+        async function getTimeLimitEnabled() {
+            const response = await fetch('/api/get-time-limit-enabled');
+            const data = await response.json();
+            return data.timeLimitEnabled === '0';
+        }
+
+        async function updateButtonState() {
+            const currentHour = new Date().getHours();
+            const registerBtn = document.getElementById('registerBtn');
+            const timeMessage = document.getElementById('timeMessage');
+
+            const timeLimitEnabled = await getTimeLimitEnabled();
+
+            if (!timeLimitEnabled || (currentHour >= 10 && currentHour < 22)) {
+                registerBtn.disabled = false;
+                timeMessage.textContent = '';
+            } else {
+                registerBtn.disabled = true;
+                timeMessage.textContent = '注册功能仅在 10:00 - 22:00 开放';
+            }
+        }
+
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.remove('hide');
+            toast.classList.add('show');
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+                toast.classList.add('hide');
+            }, 2000);
+
+            setTimeout(() => {
+                toast.classList.remove('hide');
+            }, 2500);
+        }
+
+        async function register() {
+            try {
+                const response = await fetch('/api/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ phone }),
+                });
+                
+                if (response.ok) {
+                    showToast('已提交，请等待处理');
+                    window.location.href = `/register_status.html?phone=${encodeURIComponent(phone)}`;
+                } else {
+                    const data = await response.json();
+                    showToast(data.message || '注册失败，请稍后再试。');
+                }
+            } catch (error) {
+                console.error('Register error:', error);
+                showToast('发生错误，请稍后再试。');
+            }
+        }
+
+        document.getElementById('registerBtn').addEventListener('click', register);
+        document.getElementById('homeBtn').addEventListener('click', () => {
+            window.location.href = '/';
+        });
+
+        // 初始化按钮状态并每分钟更新一次
+        updateButtonState();
+        setInterval(updateButtonState, 60000);
     </script>
 </body>
 </html>
