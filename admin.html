@@ -11,7 +11,7 @@
             transition: background 0.3s ease, transform 0.1s ease;
         }
         button:hover {
-            background: #0056b3;
+            background-color: #2563eb !important;
         }
         button:active {
             transform: scale(0.98);
@@ -160,6 +160,37 @@
             }, 2500);
         }
 
+        async function login(password) {
+            showLoading();
+            try {
+                const response = await fetch('/api/admin/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ password }),
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.success) {
+                        document.getElementById('loginContainer').classList.add('hidden');
+                        document.getElementById('adminContainer').classList.remove('hidden');
+                        fetchRecords(1);
+                    } else {
+                        showToast(data.message || '登录失败，请重试');
+                    }
+                } else {
+                    showToast('登录失败，请重试');
+                }
+            } catch (error) {
+                console.error('Login error:', error);
+                showToast('登录失败，请稍后重试');
+            } finally {
+                hideLoading();
+            }
+        }
+
         async function fetchRecords(page = 1) {
             showLoading();
             try {
@@ -242,27 +273,6 @@
             pageInfo.textContent = `第 ${currentPage} 页，共 ${totalPages} 页`;
         }
 
-        document.getElementById('selectAll').addEventListener('change', function() {
-            const checkboxes = document.querySelectorAll('.record-checkbox');
-            checkboxes.forEach(checkbox => checkbox.checked = this.checked);
-        });
-
-        document.getElementById('nextBtn').addEventListener('click', () => {
-            if (currentPage < totalPages) {
-                fetchRecords(currentPage + 1);
-            }
-        });
-
-        document.getElementById('prevBtn').addEventListener('click', () => {
-            if (currentPage > 1) {
-                fetchRecords(currentPage - 1);
-            }
-        });
-
-        document.getElementById('approveBtn').addEventListener('click', () => updateStatus(3));
-        document.getElementById('rejectBtn').addEventListener('click', () => updateStatus(4));
-        document.getElementById('resendBtn').addEventListener('click', () => updateStatus(1));
-
         async function updateStatus(newStatus) {
             showLoading();
             const selectedRecords = Array.from(document.querySelectorAll('.record-checkbox:checked'))
@@ -296,40 +306,35 @@
             showToast('状态更新成功');
         }
 
-        document.getElementById('homeBtn').addEventListener('click', () => {
-            window.location.href = '/';
-        });
-
-        async function login(password) {
-            showLoading();
-            try {
-                const response = await fetch('/api/admin/login', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ password }),
-                });
-                
-                if (response.ok) {
-                    document.getElementById('loginContainer').classList.add('hidden');
-                    document.getElementById('adminContainer').classList.remove('hidden');
-                    fetchRecords(1);
-                } else {
-                    showToast('密码错误，请重试');
-                }
-            } catch (error) {
-                console.error('Login error:', error);
-                showToast('登录失败，请稍后重试');
-            } finally {
-                hideLoading();
-            }
-        }
-
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const password = document.getElementById('adminPassword').value;
             await login(password);
+        });
+
+        document.getElementById('selectAll').addEventListener('change', function() {
+            const checkboxes = document.querySelectorAll('.record-checkbox');
+            checkboxes.forEach(checkbox => checkbox.checked = this.checked);
+        });
+
+        document.getElementById('nextBtn').addEventListener('click', () => {
+            if (currentPage < totalPages) {
+                fetchRecords(currentPage + 1);
+            }
+        });
+
+        document.getElementById('prevBtn').addEventListener('click', () => {
+            if (currentPage > 1) {
+                fetchRecords(currentPage - 1);
+            }
+        });
+
+        document.getElementById('approveBtn').addEventListener('click', () => updateStatus(3));
+        document.getElementById('rejectBtn').addEventListener('click', () => updateStatus(4));
+        document.getElementById('resendBtn').addEventListener('click', () => updateStatus(1));
+
+        document.getElementById('homeBtn').addEventListener('click', () => {
+            window.location.href = '/';
         });
     </script>
 </body>

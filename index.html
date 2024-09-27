@@ -137,10 +137,8 @@
                     const data = await response.json();
                     
                     if (response.ok) {
-                        // 验证通过，跳转到状态检查页面
                         window.location.href = `/register_status.html?phone=${encodeURIComponent(phone)}`;
                     } else {
-                        // 显示错误消息
                         showToast(data.message || '验证失败，请稍后重试');
                     }
                 } catch (error) {
