@@ -57,14 +57,18 @@ export const onRequest = async (context) => {
       break;
     default:
       // 处理 HTML 页面请求
-      let html = await fetch(request).then(res => res.text());
-      
-      // 替换 ABOUT_URL 占位符
-      html = html.replace('{{ ABOUT_URL }}', env.ABOUT_URL || ABOUT_URL || '#');
+      if (!response) {
+        let html = await fetch(request).then(res => res.text());
+        
+        // 替换 ABOUT_URL 占位符
+        html = html.replace(/\{\{\s*ABOUT_URL\s*\}\}/g, env.ABOUT_URL || ABOUT_URL || '#');
 
-      response = new Response(html, {
-        headers: { 'Content-Type': 'text/html' },
-      });
+        response = new Response(html, {
+          headers: { 'Content-Type': 'text/html' },
+        });
+      }
+
+      return response;
   }
 
   return response;

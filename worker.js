@@ -212,7 +212,7 @@ async function handleRequest(request, env) {
         let html = await response.text();
         
         // 替换 ABOUT_URL 占位符
-        html = html.replace('{{ ABOUT_URL }}', env.ABOUT_URL || ABOUT_URL || '#');
+        html = html.replace(/\{\{\s*ABOUT_URL\s*\}\}/g, env.ABOUT_URL || ABOUT_URL || '#');
 
         return new Response(html, {
             headers: { 'Content-Type': 'text/html' },
