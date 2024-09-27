@@ -167,4 +167,4 @@ export async function getTimeLimitEnabled(request, { env }) {
     });
 }
 
-export { verifyPhone, checkStatus, register, submitCode, getAdminRecords, updateAdminStatus, getTimeLimitEnabled, isWithinOperatingHours };
+// 所有函数已经通过各自的 export 语句导出，无需重复导出
