@@ -1,4 +1,4 @@
-import { TG_BOT_TOKEN, TG_CHAT_ID } from './config.js';
+import { TG_BOT_TOKEN, TG_CHAT_ID, TIME_LIMIT_ENABLED } from './config.js';
 
 export async function verifyPhone(request, { env }) {
     const { phone } = await request.json();
@@ -165,54 +165,6 @@ export async function getTimeLimitEnabled(request, { env }) {
     return new Response(JSON.stringify({ timeLimitEnabled: env.TIME_LIMIT_ENABLED || '0' }), {
         headers: { 'Content-Type': 'application/json' }
     });
-}
-
-async function handleAdminRecords(request, env) {
-    const url = new URL(request.url);
-    const page = parseInt(url.searchParams.get('page')) || 1;
-    const limit = parseInt(url.searchParams.get('limit')) || 10;
-    const phone = url.searchParams.get('phone') || '';
-    const status = url.searchParams.get('status') || '';
-
-    let query = "SELECT * FROM phone_records WHERE 1=1";
-    const params = [];
-
-    if (phone) {
-        query += " AND phone LIKE ?";
-        params.push(`%${phone}%`);
-    }
-
-    if (status !== '') {
-        query += " AND status = ?";
-        params.push(parseInt(status));
-    }
-
-    query += " ORDER BY mod_at DESC LIMIT ? OFFSET ?";
-    params.push(limit, (page - 1) * limit);
-
-    const result = await env.DB.prepare(query).bind(...params).all();
-    const totalCount = await env.DB.prepare("SELECT COUNT(*) as count FROM phone_records").first();
-
-    return new Response(JSON.stringify({
-        records: result.results,
-        currentPage: page,
-        totalPages: Math.ceil(totalCount.count / limit)
-    }), {
-        headers: { 'Content-Type': 'application/json' }
-    });
-}
-
-async function handleRequest(request, env) {
-    // ... 现有的请求处理逻辑 ...
-
-    let response;
-    // 假设这里有一些逻辑来决定应该返回哪个 HTML 文件
-
-    if (response) {
-        return response;
-    }
-
-    // ... 其他响应处理 ...
 }
 
 export { verifyPhone, checkStatus, register, submitCode, getAdminRecords, updateAdminStatus, getTimeLimitEnabled, isWithinOperatingHours };
