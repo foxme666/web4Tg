@@ -27,30 +27,45 @@ router.post('/api/admin/update-status', updateAdminStatus);
 router.get('/api/get-time-limit-enabled', getTimeLimitEnabled);
 
 export const onRequest = async (context) => {
-  console.log('Request received:', context.request.url);
-  console.log('Request method:', context.request.method);
-  try {
-    const response = await router.handle(context.request, context);
-    console.log('Response status:', response.status);
-    return response;
-  } catch (error) {
-    console.error('Error in onRequest:', error);
-    return new Response(JSON.stringify({ error: error.message }), { 
-      status: 500,
-      headers: { 'Content-Type': 'application/json' }
-    });
+  const { request, env } = context;
+  const url = new URL(request.url);
+  const path = url.pathname;
+
+  let response;
+
+  switch (path) {
+    case '/api/verify-phone':
+      response = await verifyPhone(request, { env });
+      break;
+    case '/api/check-status':
+      response = await checkStatus(request, { env });
+      break;
+    case '/api/register':
+      response = await register(request, { env });
+      break;
+    case '/api/submit-code':
+      response = await submitCode(request, { env });
+      break;
+    case '/api/admin/records':
+      response = await getAdminRecords(request, { env });
+      break;
+    case '/api/admin/update-status':
+      response = await updateAdminStatus(request, { env });
+      break;
+    case '/api/get-time-limit-enabled':
+      response = await getTimeLimitEnabled(request, { env });
+      break;
+    default:
+      // 处理 HTML 页面请求
+      let html = await fetch(request).then(res => res.text());
+      
+      // 替换 ABOUT_URL 占位符
+      html = html.replace('{{ ABOUT_URL }}', env.ABOUT_URL || ABOUT_URL || '#');
+
+      response = new Response(html, {
+        headers: { 'Content-Type': 'text/html' },
+      });
   }
+
+  return response;
 };
-
-export async function onRequest(context) {
-  // ... 现有的请求处理逻辑 ...
-
-  let html = // ... 获取 HTML 内容 ...
-
-  // 替换 ABOUT_URL 占位符
-  html = html.replace('{{ ABOUT_URL }}', context.env.ABOUT_URL || ABOUT_URL || '#');
-
-  return new Response(html, {
-    headers: { 'Content-Type': 'text/html' },
-  });
-}
