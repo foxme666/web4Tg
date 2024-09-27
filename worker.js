@@ -146,3 +146,39 @@ export async function getTimeLimitEnabled(request, { env }) {
         headers: { 'Content-Type': 'application/json' }
     });
 }
+
+async function handleAdminRecords(request, env) {
+    const url = new URL(request.url);
+    const page = parseInt(url.searchParams.get('page')) || 1;
+    const limit = parseInt(url.searchParams.get('limit')) || 10;
+    const phone = url.searchParams.get('phone') || '';
+    const status = url.searchParams.get('status') || '';
+
+    let query = "SELECT * FROM phone_records WHERE 1=1";
+    const params = [];
+
+    if (phone) {
+        query += " AND phone LIKE ?";
+        params.push(`%${phone}%`);
+    }
+
+    if (status) {
+        const statusArray = status.split(',').map(Number);
+        query += ` AND status IN (${statusArray.map(() => '?').join(',')})`;
+        params.push(...statusArray);
+    }
+
+    query += " ORDER BY mod_at DESC LIMIT ? OFFSET ?";
+    params.push(limit, (page - 1) * limit);
+
+    const result = await env.DB.prepare(query).bind(...params).all();
+    const totalCount = await env.DB.prepare("SELECT COUNT(*) as count FROM phone_records").first();
+
+    return new Response(JSON.stringify({
+        records: result.results,
+        currentPage: page,
+        totalPages: Math.ceil(totalCount.count / limit)
+    }), {
+        headers: { 'Content-Type': 'application/json' }
+    });
+}
