@@ -4,7 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>管理员页面</title>
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <!-- 使用本地Tailwind CSS文件 -->
+    <link href="/css/tailwind.min.css" rel="stylesheet">
+    <!-- 预加载关键资源 -->
+    <link rel="preload" href="/css/tailwind.min.css" as="style">
+    <link rel="preload" href="/js/admin.js" as="script">
     <style>
         @keyframes fadeIn {
             from { opacity: 0; }
@@ -83,162 +87,7 @@
         </button>
     </div>
 
-    <script>
-        let records = [];
-        let currentPage = 1;
-        let totalPages = 1;
-        const recordsPerPage = 10;
-
-        function showLoading() {
-            document.getElementById('loadingOverlay').classList.add('show');
-        }
-
-        function hideLoading() {
-            document.getElementById('loadingOverlay').classList.remove('show');
-        }
-
-        async function fetchRecords(page = 1) {
-            showLoading();
-            try {
-                const response = await fetch(`/api/admin/records?page=${page}&limit=${recordsPerPage}`);
-                if (response.ok) {
-                    const data = await response.json();
-                    records = data.records;
-                    currentPage = data.currentPage;
-                    totalPages = data.totalPages;
-                    displayRecords();
-                    updatePagination();
-                } else {
-                    console.error('Failed to fetch records');
-                    document.getElementById('recordsContainer').innerHTML = '<tr><td colspan="4" class="text-red-500">获取记录失败，请刷新页面重试</td></tr>';
-                }
-            } catch (error) {
-                console.error('Error fetching records:', error);
-                document.getElementById('recordsContainer').innerHTML = '<tr><td colspan="4" class="text-red-500">发生错误，请刷新页面重试</td></tr>';
-            } finally {
-                hideLoading();
-            }
-        }
-
-        function displayRecords() {
-            const container = document.getElementById('recordsContainer');
-            container.innerHTML = '';
-
-            if (records.length === 0) {
-                container.innerHTML = '<tr><td colspan="4" class="py-3 px-6 text-center">暂无记录</td></tr>';
-                return;
-            }
-
-            records.forEach((record, index) => {
-                const row = document.createElement('tr');
-                row.className = 'border-b border-gray-200 hover:bg-gray-100';
-                row.innerHTML = `
-                    <td class="py-3 px-6 text-left whitespace-nowrap">
-                        <input type="checkbox" id="record-${index}" class="record-checkbox form-checkbox h-5 w-5 text-blue-600">
-                    </td>
-                    <td class="py-3 px-6 text-left">${record.phone}</td>
-                    <td class="py-3 px-6 text-left">${getStatusText(record.status)}</td>
-                    <td class="py-3 px-6 text-left">${record.code || '无'}</td>
-                    <td class="py-3 px-6 text-left">${formatDate(record.mod_at)}</td>
-                `;
-                container.appendChild(row);
-            });
-        }
-
-        function getStatusText(status) {
-            const statusMap = {
-                0: '未注册',
-                1: '注册中',
-                2: '审核中',
-                3: '已注册',
-                4: '无效'
-            };
-            return statusMap[status] || '未知状态';
-        }
-
-        function formatDate(mod_at) {
-            const date = new Date(mod_at);
-
-            // 直接格式化为 YYYY-MM-DD HH:mm:ss
-            const year = date.getFullYear();
-            const month = String(date.getMonth() + 1).padStart(2, '0'); // 月份从 0 开始
-            const day = String(date.getDate()).padStart(2, '0');
-            const hours = String(date.getHours()).padStart(2, '0');
-            const minutes = String(date.getMinutes()).padStart(2, '0');
-            const seconds = String(date.getSeconds()).padStart(2, '0');
-
-            return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
-}
-
-
-        
-
-        function updatePagination() {
-            const prevBtn = document.getElementById('prevBtn');
-            const nextBtn = document.getElementById('nextBtn');
-            const pageInfo = document.getElementById('pageInfo');
-
-            prevBtn.disabled = currentPage === 1;
-            nextBtn.disabled = currentPage === totalPages;
-
-            pageInfo.textContent = `第 ${currentPage} 页，共 ${totalPages} 页`;
-        }
-
-        document.getElementById('selectAll').addEventListener('change', function() {
-            const checkboxes = document.querySelectorAll('.record-checkbox');
-            checkboxes.forEach(checkbox => checkbox.checked = this.checked);
-        });
-
-        document.getElementById('nextBtn').addEventListener('click', () => {
-            if (currentPage < totalPages) {
-                fetchRecords(currentPage + 1);
-            }
-        });
-
-        document.getElementById('prevBtn').addEventListener('click', () => {
-            if (currentPage > 1) {
-                fetchRecords(currentPage - 1);
-            }
-        });
-
-        document.getElementById('approveBtn').addEventListener('click', () => updateStatus(3));
-        document.getElementById('rejectBtn').addEventListener('click', () => updateStatus(4));
-
-        async function updateStatus(newStatus) {
-            showLoading();
-            const selectedRecords = Array.from(document.querySelectorAll('.record-checkbox:checked'))
-                .map(checkbox => records[parseInt(checkbox.id.split('-')[1])]);
-
-            for (const record of selectedRecords) {
-                try {
-                    const response = await fetch('/api/admin/update-status', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({
-                            phone: record.phone,
-                            status: newStatus
-                        }),
-                    });
-
-                    if (!response.ok) {
-                        console.error(`Failed to update status for ${record.phone}`);
-                    }
-                } catch (error) {
-                    console.error('Error:', error);
-                }
-            }
-
-            await fetchRecords(currentPage);
-            hideLoading();
-        }
-
-        document.getElementById('homeBtn').addEventListener('click', () => {
-            window.location.href = '/';
-        });
-
-        fetchRecords(1);
-    </script>
+    <!-- 使用外部JavaScript文件 -->
+    <script src="/js/admin.js"></script>
 </body>
 </html>
