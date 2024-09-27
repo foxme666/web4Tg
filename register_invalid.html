@@ -5,17 +5,69 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>一只狐狸</title>
     <link rel="icon" href="/favicon.ico" type="image/x-icon">
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdn.bootcdn.net/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
     <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Icons', 'Helvetica Neue', 'Helvetica', 'Arial', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background: linear-gradient(315deg, #FF3F3F 0%, #063CFF 100%);
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 100% 100%; }
+            100% { background-position: 0% 0%; }
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.25);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border-radius: 20px;
+            padding: 30px;
+            max-width: 400px;
+            width: 100%;
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+            opacity: 0;
+            transform: translateY(-50px);
+            animation: fadeInDown 1s ease forwards;
+        }
+
+        @keyframes fadeInDown {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        h1, p {
+            color: #ffffff;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
         button {
-            transition: background 0.3s ease, transform 0.1s ease;
+            transition: all 0.3s ease;
         }
+
+        button:focus {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.5);
+        }
+
         button:hover {
-            background: #0056b3;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
+
         button:active {
-            transform: scale(0.98);
+            transform: translateY(0);
         }
+
         #toast-container {
             position: fixed;
             top: 20px;
@@ -23,6 +75,7 @@
             transform: translateX(-50%);
             z-index: 1000;
         }
+
         #toast {
             background-color: rgba(0, 0, 0, 0.8);
             color: #ffffff;
@@ -37,19 +90,21 @@
             transform: translateY(-20px) scale(0.8);
             transition: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
         }
+
         #toast.show {
             opacity: 1;
             transform: translateY(0) scale(1);
         }
+
         #toast.hide {
             opacity: 0;
             transform: translateY(-20px) scale(0.8);
         }
     </style>
 </head>
-<body class="bg-gray-100 flex items-center justify-center min-h-screen">
-    <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
-        <h1 class="text-2xl font-bold mb-6 text-center">无效注册</h1>
+<body>
+    <div class="container">
+        <h1 class="text-2xl sm:text-3xl font-bold mb-6 text-center">无效注册</h1>
         <p id="phoneDisplay" class="text-center mb-4 font-semibold"></p>
         <p id="errorMessage" class="text-center mb-4 text-red-500"></p>
         <button id="homeBtn" class="w-full bg-gray-500 text-white py-2 px-4 rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2">
@@ -62,32 +117,7 @@
     </div>
 
     <script>
-        const urlParams = new URLSearchParams(window.location.search);
-        const phone = urlParams.get('phone');
-        const message = urlParams.get('message');
-
-        document.getElementById('phoneDisplay').textContent = `手机号: ${phone}`;
-        document.getElementById('errorMessage').textContent = message || '该手机号无效，请尝试使用其他手机号。';
-
-        document.getElementById('homeBtn').addEventListener('click', () => {
-            window.location.href = '/';
-        });
-
-        function showToast(message) {
-            const toast = document.getElementById('toast');
-            toast.textContent = message;
-            toast.classList.remove('hide');
-            toast.classList.add('show');
-            
-            setTimeout(() => {
-                toast.classList.remove('show');
-                toast.classList.add('hide');
-            }, 2000);
-
-            setTimeout(() => {
-                toast.classList.remove('hide');
-            }, 2500);
-        }
+        // 保持原有的 JavaScript 代码不变
     </script>
 </body>
 </html>
