@@ -1,4 +1,4 @@
-import { TG_BOT_TOKEN, TG_CHAT_ID, ABOUT_URL } from './config.js';
+import { TG_BOT_TOKEN, TG_CHAT_ID } from './config.js';
 
 export async function verifyPhone(request, { env }) {
     const { phone } = await request.json();
@@ -209,16 +209,10 @@ async function handleRequest(request, env) {
     // 假设这里有一些逻辑来决定应该返回哪个 HTML 文件
 
     if (response) {
-        let html = await response.text();
-        
-        // 替换 ABOUT_URL 占位符
-        const aboutUrl = env.ABOUT_URL || ABOUT_URL || '#';
-        html = html.replace(/\{\{\s*ABOUT_URL\s*\}\}/g, aboutUrl);
-
-        return new Response(html, {
-            headers: { 'Content-Type': 'text/html' },
-        });
+        return response;
     }
 
     // ... 其他响应处理 ...
 }
+
+export { verifyPhone, checkStatus, register, submitCode, getAdminRecords, updateAdminStatus, getTimeLimitEnabled, isWithinOperatingHours };
